@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "KUKU DIARY (phone, arm64)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--target-platform",
+        "android-arm64",
+        "--dart-define=API_BASE_URL=http://192.168.1.52:8000/api"
+      ]
+    }
+  ]
+}

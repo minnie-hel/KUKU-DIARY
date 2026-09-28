@@ -8,6 +8,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/otp_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/setup/farm_setup_screen.dart';
 import 'screens/main_shell.dart';
 
@@ -48,6 +49,8 @@ class KukuDiaryApp extends StatelessWidget {
         return const LoginScreen();
       case 'register':
         return const RegisterScreen();
+      case 'forgot_password':
+        return const ForgotPasswordScreen();
       case 'otp':
         return const OtpScreen();
       case 'farm_setup':

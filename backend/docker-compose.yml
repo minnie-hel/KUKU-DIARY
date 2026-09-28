@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: kuku-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kuku
+      POSTGRES_USER: kuku
+      POSTGRES_PASSWORD: kuku_diary_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - kuku_pgdata:/var/lib/postgresql/data
+
+volumes:
+  kuku_pgdata:

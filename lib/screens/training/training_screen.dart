@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../models/models.dart';
 
 class TrainingScreen extends StatefulWidget {
   const TrainingScreen({super.key});
@@ -9,252 +12,403 @@ class TrainingScreen extends StatefulWidget {
 }
 
 class _TrainingScreenState extends State<TrainingScreen> {
-  double _userProgress = 0.65; // 65% completed
+  String _selectedCategory = 'All';
 
-  final List<Map<String, dynamic>> _lessons = [
-    {
-      'title': 'Jinsi ya Kuandaa Banda la Kuku wa Mayai',
-      'category': 'Usimamizi wa Banda',
-      'duration': 'Dakika 12',
-      'type': 'video',
-      'description': 'Jifunze vipimo sahihi vya banda, mzunguko wa hewa na maandalizi ya mazingira kabla ya kuingiza vifaranga.',
-      'views': '2.4k Views',
-    },
-    {
-      'title': 'Kilimo cha Azolla na Lishe Mbadala ya Kuku',
-      'category': 'Lishe & Vyakula',
-      'duration': 'Dakika 18',
-      'type': 'video',
-      'description': 'Jinsi ya kuotesha Azolla nyumbani kwako kupunguza gharama za chakula cha kuku kwa 40%.',
-      'views': '5.1k Views',
-    },
-    {
-      'title': 'Utambuzi wa Mapema wa Ugonjwa wa Kideri',
-      'category': 'Magonjwa & Tiba',
-      'duration': 'Dakika 10',
-      'type': 'video',
-      'description': 'Njia sahihi za kuchoma chanjo na kutambua dalili za Kideri mapema mno.',
-      'views': '3.8k Views',
-    },
-    {
-      'title': 'Mwongozo wa Uwekaji Kumbukumbu za Shamba',
-      'category': 'Biashara & Masoko',
-      'duration': 'Dakika 8',
-      'type': 'article',
-      'description': 'Makala maalum inayoeleza jinsi ya kuhesabu faida na hasara katika kila awamu ya utagaji.',
-      'views': '1.9k Readers',
-    },
+  final List<String> _categories = [
+    'All',
+    'Brooding',
+    'Feeding',
+    'Disease Prevention',
+    'Housing',
+    'Incubation',
+    'Business Skills',
   ];
-
-  void _openLesson(Map<String, dynamic> lesson) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Video Player Simulator Box
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.black87,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Icon(Icons.play_circle_fill_rounded, color: AppTheme.amberGold, size: 64),
-                  Positioned(
-                    bottom: 12,
-                    left: 12,
-                    right: 12,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(lesson['duration'] as String, style: const TextStyle(color: Colors.white, fontSize: 12)),
-                        const Text('HD 1080p', style: TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Text(
-              lesson['title'] as String,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-
-            Row(
-              children: [
-                Chip(label: Text(lesson['category'] as String, style: const TextStyle(fontSize: 11))),
-                const SizedBox(width: 8),
-                Text(lesson['views'] as String, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            const Text('Maelezo ya Somo:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 6),
-            Text(
-              lesson['description'] as String,
-              style: TextStyle(color: Colors.grey.shade700, height: 1.5, fontSize: 14),
-            ),
-            const Spacer(),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _userProgress = (_userProgress + 0.1).clamp(0.0, 1.0);
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Somo limekamilika! Maendeleo yako yameongezeka.')),
-                  );
-                },
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('WEKA ALAMA YA SOMO LIMEKAMILIKA'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
+    final appState = Provider.of<AppState>(context);
+    final isSw = appState.selectedLanguage == 'sw';
+
+    final filteredModules = _selectedCategory == 'All'
+        ? appState.trainingModules
+        : appState.trainingModules.where((m) => m.category == _selectedCategory).toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isSw ? 'Mafunzo ya Ufugaji' : 'Poultry Training'),
+      ),
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // User Learning Progress Card
+          // Category Horizontal Filter Bar
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryGreen,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Maendeleo Yako ya Masomo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('${(_userProgress * 100).toInt()}%', style: const TextStyle(color: AppTheme.amberGold, fontWeight: FontWeight.bold, fontSize: 18)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: _userProgress,
-                    minHeight: 8,
-                    backgroundColor: Colors.white24,
-                    color: AppTheme.amberGold,
+            height: 54,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: _categories.length,
+              itemBuilder: (ctx, idx) {
+                final cat = _categories[idx];
+                final isSelected = cat == _selectedCategory;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: FilterChip(
+                    selected: isSelected,
+                    label: Text(
+                      _getCategoryLabel(cat, isSw),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    selectedColor: AppTheme.primaryGreen,
+                    backgroundColor: Colors.grey.shade200,
+                    onSelected: (val) {
+                      setState(() {
+                        _selectedCategory = cat;
+                      });
+                    },
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text('Umekamilisha masomo 8 kati ya 12 katika kozi hii.', style: TextStyle(color: Colors.white70, fontSize: 12)),
-              ],
+                );
+              },
             ),
           ),
-          const SizedBox(height: 24),
 
-          // Categories Chips
-          const Text('Kipengele cha Elimu', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildCategoryChip('Masomo Yote', true),
-                _buildCategoryChip('Lishe & Vyakula', false),
-                _buildCategoryChip('Magonjwa & Tiba', false),
-                _buildCategoryChip('Usimamizi wa Banda', false),
-                _buildCategoryChip('Biashara', false),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Lessons List
-          const Text('Masomo na Video za Mafunzo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _lessons.length,
-            itemBuilder: (context, index) {
-              final lesson = _lessons[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(12),
-                  leading: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: lesson['type'] == 'video' ? Colors.red.shade100 : Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(12),
+          // Training Content List
+          Expanded(
+            child: filteredModules.isEmpty
+                ? Center(
+                    child: Text(
+                      isSw ? 'Hakuna mafunzo katika jamii hii kwa sasa' : 'No training contents found for this category',
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
-                    child: Icon(
-                      lesson['type'] == 'video' ? Icons.play_arrow_rounded : Icons.article_rounded,
-                      color: lesson['type'] == 'video' ? Colors.red : Colors.blue,
-                      size: 28,
-                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredModules.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredModules[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: _getContentTypeColor(item.contentType),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(_getContentTypeIcon(item.contentType), size: 16, color: Colors.white),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          item.contentType,
+                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    item.durationOrReadTime,
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                item.title,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                item.summary,
+                                style: const TextStyle(fontSize: 15, height: 1.3, color: Colors.black87),
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _openTrainingDetails(context, item, isSw),
+                                      icon: const Icon(Icons.menu_book_rounded, size: 20),
+                                      label: Text(
+                                        isSw ? 'Soma / Tazama' : 'Read / Watch',
+                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                  if (item.quizQuestions != null && item.quizQuestions!.isNotEmpty) ...[
+                                    const SizedBox(width: 10),
+                                    ElevatedButton.icon(
+                                      onPressed: () => _startQuizDialog(context, item, isSw),
+                                      icon: const Icon(Icons.quiz_rounded, size: 20),
+                                      label: Text(
+                                        isSw ? 'Fanya Quiz' : 'Quiz',
+                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.amberGold,
+                                        foregroundColor: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  title: Text(lesson['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text('${lesson['category']} • ${lesson['duration']}'),
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => _openLesson(lesson),
-                ),
-              );
-            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryChip(String label, bool isSelected) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: isSelected,
-        selectedColor: AppTheme.primaryGreen,
-        labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-        onSelected: (val) {},
+  String _getCategoryLabel(String cat, bool isSw) {
+    if (!isSw) return cat;
+    switch (cat) {
+      case 'All':
+        return 'Yote';
+      case 'Brooding':
+        return 'Kulea Vifaranga';
+      case 'Feeding':
+        return 'Lishe & Chakula';
+      case 'Disease Prevention':
+        return 'Kuzuia Magonjwa';
+      case 'Housing':
+        return 'Ujenzi wa Banda';
+      case 'Incubation':
+        return 'Utotoleshaji';
+      case 'Business Skills':
+        return 'Biashara & Masoko';
+      default:
+        return cat;
+    }
+  }
+
+  Color _getContentTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'video':
+        return Colors.red;
+      case 'article':
+        return AppTheme.primaryGreen;
+      case 'pdf':
+        return Colors.orange.shade800;
+      case 'quiz':
+        return AppTheme.amberGold;
+      default:
+        return AppTheme.infoBlue;
+    }
+  }
+
+  IconData _getContentTypeIcon(String type) {
+    switch (type.toLowerCase()) {
+      case 'video':
+        return Icons.play_circle_fill_rounded;
+      case 'article':
+        return Icons.article_rounded;
+      case 'pdf':
+        return Icons.picture_as_pdf_rounded;
+      case 'quiz':
+        return Icons.psychology_rounded;
+      default:
+        return Icons.image_rounded;
+    }
+  }
+
+  void _openTrainingDetails(BuildContext context, TrainingModule item, bool isSw) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 28),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Divider(height: 20),
+              if (item.contentType == 'Video') ...[
+                Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.play_circle_fill_rounded, color: Colors.white, size: 60),
+                        const SizedBox(height: 8),
+                        Text(
+                          isSw ? 'Bonyeza kucheza Video ya Mafunzo' : 'Tap to play Training Video',
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              Text(
+                item.contentDetails,
+                style: const TextStyle(fontSize: 16, height: 1.5, color: Colors.black87),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(isSw ? 'Funga Mafunzo' : 'Close Module', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _startQuizDialog(BuildContext context, TrainingModule item, bool isSw) {
+    int selectedOption = -1;
+    int currentQuestionIndex = 0;
+    int score = 0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          final q = item.quizQuestions![currentQuestionIndex];
+
+          return AlertDialog(
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${isSw ? 'Jaribio' : 'Quiz'} (${currentQuestionIndex + 1}/${item.quizQuestions!.length})',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Icon(Icons.psychology_rounded, color: AppTheme.amberGold, size: 28),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  q.question,
+                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 14),
+                ...List.generate(
+                  q.options.length,
+                  (optIdx) => RadioListTile<int>(
+                    title: Text(q.options[optIdx], style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    value: optIdx,
+                    groupValue: selectedOption,
+                    activeColor: AppTheme.primaryGreen,
+                    onChanged: (val) {
+                      setState(() {
+                        selectedOption = val!;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: selectedOption == -1
+                    ? null
+                    : () {
+                        if (selectedOption == q.correctOptionIndex) {
+                          score++;
+                        }
+                        if (currentQuestionIndex + 1 < item.quizQuestions!.length) {
+                          setState(() {
+                            currentQuestionIndex++;
+                            selectedOption = -1;
+                          });
+                        } else {
+                          Navigator.pop(ctx);
+                          _showQuizResults(context, score, item.quizQuestions!.length, isSw);
+                        }
+                      },
+                child: Text(
+                  currentQuestionIndex + 1 < item.quizQuestions!.length
+                      ? (isSw ? 'Swali Linalofuata' : 'Next Question')
+                      : (isSw ? 'Maliza Jaribio' : 'Finish Quiz'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showQuizResults(BuildContext context, int score, int total, bool isSw) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isSw ? 'Matokeo ya Jaribio' : 'Quiz Score', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.stars_rounded, color: AppTheme.amberGold, size: 64),
+            const SizedBox(height: 12),
+            Text(
+              '$score / $total',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              score == total
+                  ? (isSw ? 'Hongera sana! Umejibu maswali yote kwa usahihi.' : 'Excellent work! You got full score.')
+                  : (isSw ? 'Jaribio zuri. Endelea kujifunza ili kuongeza uelewa.' : 'Good attempt! Keep learning to improve.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(isSw ? 'Sawa' : 'OK', style: const TextStyle(fontSize: 16)),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
 
@@ -11,18 +13,25 @@ class FarmSetupScreen extends StatefulWidget {
 }
 
 class _FarmSetupScreenState extends State<FarmSetupScreen> {
-  final _farmNameController = TextEditingController(text: 'Kuku Bora Farm');
-  final _locationController = TextEditingController(text: 'Kibaha, Pwani');
-  final _chickenCountController = TextEditingController(text: '450');
+  final _farmNameController = TextEditingController();
+  final _farmerNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _locationController = TextEditingController();
+  final _chickenCountController = TextEditingController();
+  final _flockAgeController = TextEditingController();
 
   String _selectedChickenType = 'Kuku wa Mayai (Layers)';
   String _selectedHousingKey = 'Mfumo wa Sakafu (Deep Litter)';
+  double _latitude = 0;
+  double _longitude = 0;
   bool _isGpsFetching = false;
+  bool _isSaving = false;
 
   final List<String> _chickenTypes = [
+    'Kuku wa Kienyeji',
+    'Kuku Bora wa Kienyeji',
     'Kuku wa Mayai (Layers)',
     'Kuku wa Nyama (Broilers)',
-    'Kuku wa Kienyeji',
     'Kuku Chotara / Mixed',
   ];
 
@@ -47,34 +56,100 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
       'title': 'Mfumo wa Nusu Huria',
       'sub': 'Mchanganyiko wa banda na eneo la nje.',
     },
+    {
+      'key': 'Nyingine (Other)',
+      'title': 'Nyingine',
+      'sub': 'Mfumo mwingine wa banda.',
+    },
   ];
 
-  void _fetchGps() {
-    setState(() {
-      _isGpsFetching = true;
-    });
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        setState(() {
-          _isGpsFetching = false;
-          _locationController.text = 'Kibaha (Lat: -6.77, Long: 38.92)';
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Eneo la GPS limechukuliwa kikamilifu!')),
-        );
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    final profile = Provider.of<AppState>(context, listen: false).farmProfile;
+    _farmNameController.text = profile.farmName;
+    _farmerNameController.text = profile.farmerName;
+    _phoneController.text = profile.phone;
+    _locationController.text = profile.location;
+    _chickenCountController.text = profile.totalChickens > 0 ? '${profile.totalChickens}' : '';
+    _flockAgeController.text = profile.farmSize;
+    if (_chickenTypes.contains(profile.chickenType)) _selectedChickenType = profile.chickenType;
+    if (_housingCards.any((c) => c['key'] == profile.housingSystem)) _selectedHousingKey = profile.housingSystem;
+    _latitude = profile.latitude;
+    _longitude = profile.longitude;
   }
 
-  void _finishSetup() {
+  @override
+  void dispose() {
+    _farmNameController.dispose();
+    _farmerNameController.dispose();
+    _phoneController.dispose();
+    _locationController.dispose();
+    _chickenCountController.dispose();
+    _flockAgeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchGps() async {
+    setState(() => _isGpsFetching = true);
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        throw Exception('Ruhusa ya GPS imekataliwa.');
+      }
+      final position = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+        if (_locationController.text.trim().isEmpty) {
+          _locationController.text =
+              'Lat ${position.latitude.toStringAsFixed(4)}, Long ${position.longitude.toStringAsFixed(4)}';
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Eneo la GPS limechukuliwa kikamilifu!')),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _isGpsFetching = false);
+    }
+  }
+
+  Future<void> _finishSetup() async {
+    if (_farmNameController.text.trim().isEmpty || _chickenCountController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jaza jina la shamba na idadi ya kuku.')),
+      );
+      return;
+    }
     final appState = Provider.of<AppState>(context, listen: false);
-    appState.updateFarmSetup(
-      farmName: _farmNameController.text.trim(),
-      location: _locationController.text.trim(),
-      chickenType: _selectedChickenType,
-      totalChickens: int.tryParse(_chickenCountController.text) ?? 450,
-      housingSystem: _selectedHousingKey,
-    );
+    setState(() => _isSaving = true);
+    try {
+      await appState.updateFarmSetup(
+        farmName: _farmNameController.text.trim(),
+        location: _locationController.text.trim(),
+        chickenType: _selectedChickenType,
+        totalChickens: int.tryParse(_chickenCountController.text.trim()) ?? 0,
+        housingSystem: _selectedHousingKey,
+        latitude: _latitude,
+        longitude: _longitude,
+        farmSize: _flockAgeController.text.trim(),
+        farmerName: _farmerNameController.text.trim(),
+        phone: _phoneController.text.trim(),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -84,6 +159,7 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false,
         title: const Text(
           'Usajili wa Shamba',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w900, fontSize: 20),
@@ -96,53 +172,12 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Progress Bar (HATUA YA 1 KATI YA 3)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text(
-                    'HATUA YA 1 KATI YA 3',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryGreen,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  Text(
-                    '33% IMEKAMILIKA',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: 0.33,
-                  minHeight: 8,
-                  backgroundColor: const Color(0xFFE5E7EB),
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryGreen),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Title in Swahili
               const Text(
                 'Tuambie Kuhusu Shamba Lako',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF111827),
-                ),
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF111827)),
               ),
               const SizedBox(height: 24),
 
-              // Jina la Shamba
               _buildFieldLabel(Icons.home_work_outlined, 'Jina la Shamba Lako'),
               TextField(
                 controller: _farmNameController,
@@ -151,30 +186,52 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Eneo / Mahali Shamba Lilipo + GPS Pin
-              _buildFieldLabel(Icons.location_on_outlined, 'Mahali Shamba Lilipo (Mkoa / Wilaya)'),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _locationController,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      decoration: _buildInputDecoration(
-                        'Mf. Kibaha, Pwani',
-                        suffixIcon: IconButton(
-                          icon: _isGpsFetching
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                              : const Icon(Icons.my_location_rounded, color: Color(0xFF0284C7), size: 24),
-                          onPressed: _fetchGps,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              _buildFieldLabel(Icons.person_outline_rounded, 'Jina la Mfugaji'),
+              TextField(
+                controller: _farmerNameController,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                decoration: _buildInputDecoration('Mf. Juma Hamisi'),
               ),
               const SizedBox(height: 20),
 
-              // Aina ya Kuku
+              _buildFieldLabel(Icons.phone_android_rounded, 'Namba ya Simu'),
+              TextField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                decoration: _buildInputDecoration('Mf. 0712345678'),
+              ),
+              const SizedBox(height: 20),
+
+              _buildFieldLabel(Icons.location_on_outlined, 'Mahali Shamba Lilipo (Mkoa / Wilaya)'),
+              TextField(
+                controller: _locationController,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                decoration: _buildInputDecoration(
+                  'Mf. Kibaha, Pwani',
+                  suffixIcon: IconButton(
+                    tooltip: 'Chukua GPS',
+                    icon: _isGpsFetching
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : Icon(
+                            Icons.my_location_rounded,
+                            color: _latitude != 0 ? AppTheme.primaryGreen : const Color(0xFF0284C7),
+                            size: 24,
+                          ),
+                    onPressed: _isGpsFetching ? null : _fetchGps,
+                  ),
+                ),
+              ),
+              if (_latitude != 0 || _longitude != 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'GPS: ${_latitude.toStringAsFixed(5)}, ${_longitude.toStringAsFixed(5)}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.primaryGreen),
+                  ),
+                ),
+              const SizedBox(height: 20),
+
               _buildFieldLabel(Icons.pets_outlined, 'Aina ya Kuku Wanaofugwa'),
               DropdownButtonFormField<String>(
                 initialValue: _selectedChickenType,
@@ -191,29 +248,43 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Idadi ya Kuku Bandani
-              _buildFieldLabel(Icons.numbers_rounded, 'Idadi ya Kuku Wote Bandani'),
-              TextField(
-                controller: _chickenCountController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-                decoration: _buildInputDecoration(
-                  'Mf. 450',
-                  suffixWidget: const Padding(
-                    padding: EdgeInsets.only(right: 12.0),
-                    child: Text(
-                      'Kuku',
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryGreen),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel(Icons.numbers_rounded, 'Idadi ya Kuku'),
+                        TextField(
+                          controller: _chickenCountController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                          decoration: _buildInputDecoration('Mf. 450'),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel(Icons.calendar_today_rounded, 'Umri wa Kundi'),
+                        TextField(
+                          controller: _flockAgeController,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          decoration: _buildInputDecoration('Mf. Wiki 12'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
-              // Mfumo wa Banda Selection Cards
               _buildFieldLabel(Icons.grid_view_rounded, 'Aina ya Banda Lako (Housing System)'),
               const SizedBox(height: 8),
-
               GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -229,11 +300,7 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
                   final isSelected = _selectedHousingKey == card['key'];
 
                   return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedHousingKey = card['key']!;
-                      });
-                    },
+                    onTap: () => setState(() => _selectedHousingKey = card['key']!),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -282,34 +349,27 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
               ),
               const SizedBox(height: 32),
 
-              // HIFADHI NA ENDELEA Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _finishSetup,
+                  onPressed: _isSaving ? null : _finishSetup,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
                     elevation: 5,
                     shadowColor: AppTheme.primaryGreen.withValues(alpha: 0.4),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Text(
-                        'HIFADHI NA ENDELEA',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
+                        _isSaving ? 'INAHIFADHI...' : 'HIFADHI NA ENDELEA',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_rounded, size: 24),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward_rounded, size: 24),
                     ],
                   ),
                 ),
@@ -329,12 +389,11 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
         children: [
           Icon(icon, size: 18, color: AppTheme.primaryGreen),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF1F2937),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Color(0xFF1F2937)),
             ),
           ),
         ],
@@ -342,11 +401,10 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
     );
   }
 
-  InputDecoration _buildInputDecoration(String hint, {Widget? suffixIcon, Widget? suffixWidget}) {
+  InputDecoration _buildInputDecoration(String hint, {Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
       suffixIcon: suffixIcon,
-      suffix: suffixWidget,
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),

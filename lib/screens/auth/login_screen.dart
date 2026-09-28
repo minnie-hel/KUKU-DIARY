@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/tipa_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,12 +12,22 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'juma.hamisi@kukudiary.co.tz');
-  final _passwordController = TextEditingController(text: '12345678');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isSubmitting = false;
 
-  void _handleLogin() {
-    Provider.of<AppState>(context, listen: false).setRoute('main_shell');
+  Future<void> _handleLogin() async {
+    final appState = Provider.of<AppState>(context, listen: false);
+    setState(() => _isSubmitting = true);
+    try {
+      await appState.login(_emailController.text.trim(), _passwordController.text);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -33,26 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 16),
 
-              // Large Gold Chicken & Egg Crest
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.amberGold, width: 3),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.pets_rounded,
-                    size: 54,
-                    color: Color(0xFFB45309),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Karibu Tena Title (Big Kiswahili Typography)
+              const TipaLogo(size: 96, showTitle: true),
+              const SizedBox(height: 20),
               const Text(
                 'Karibu Tena Shambani!',
                 textAlign: TextAlign.center,
@@ -166,11 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: TextButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Kiunganishi cha neno la siri kimetumwa kwenye namba yako!'),
-                          ),
-                        );
+                        appState.setRoute('forgot_password');
                       },
                       child: const Text(
                         'Umesahau Neno la Siri?',
@@ -191,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _handleLogin,
+                  onPressed: _isSubmitting ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
@@ -203,67 +192,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Text(
-                        'INGIA SHAMBANI',
-                        style: TextStyle(
+                        _isSubmitting ? 'INASUBIRI...' : 'INGIA SHAMBANI',
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_rounded, size: 24),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward_rounded, size: 24),
                     ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // AU TUMIA njia nyingine
-              Row(
-                children: const [
-                  Expanded(child: Divider(color: Color(0xFFD1D5DB), thickness: 1.5)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Text(
-                      'AU INGIA KWA SIMU',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF6B7280),
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                  Expanded(child: Divider(color: Color(0xFFD1D5DB), thickness: 1.5)),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // TUMIA NAMBA YA SIMU (OTP) Secondary Button
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    appState.setRoute('otp');
-                  },
-                  icon: const Icon(Icons.phone_android_rounded, color: AppTheme.primaryGreen, size: 24),
-                  label: const Text(
-                    'Tumia Namba ya Simu (OTP)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryGreen,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFECFDF5),
-                    side: const BorderSide(color: AppTheme.primaryGreen, width: 2),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
                   ),
                 ),
               ),

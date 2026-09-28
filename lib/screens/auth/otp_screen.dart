@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/tipa_logo.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -14,6 +15,8 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
+  final _newPasswordController = TextEditingController();
+
   @override
   void dispose() {
     for (var controller in _controllers) {
@@ -22,11 +25,28 @@ class _OtpScreenState extends State<OtpScreen> {
     for (var node in _focusNodes) {
       node.dispose();
     }
+    _newPasswordController.dispose();
     super.dispose();
   }
 
-  void _verifyOtp() {
-    Provider.of<AppState>(context, listen: false).setRoute('farm_setup');
+  Future<void> _verifyOtp() async {
+    final code = _controllers.map((c) => c.text).join();
+    if (code.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingiza tarakimu 6 za OTP.')),
+      );
+      return;
+    }
+    final appState = Provider.of<AppState>(context, listen: false);
+    try {
+      await appState.verifyOtp(
+        code,
+        newPassword: _newPasswordController.text.trim().isEmpty ? null : _newPasswordController.text.trim(),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
   }
 
   @override
@@ -49,26 +69,8 @@ class _OtpScreenState extends State<OtpScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Gold Chicken Crest
-              Container(
-                width: 86,
-                height: 86,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.amberGold, width: 2.5),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.pets_rounded,
-                    size: 48,
-                    color: Color(0xFFB45309),
-                  ),
-                ),
-              ),
+              const TipaLogo(size: 80, showTitle: false),
               const SizedBox(height: 18),
-
-              // Title in Swahili
               const Text(
                 'Ingiza Namba ya Siri (OTP)',
                 textAlign: TextAlign.center,
@@ -81,13 +83,13 @@ class _OtpScreenState extends State<OtpScreen> {
               const SizedBox(height: 8),
               RichText(
                 textAlign: TextAlign.center,
-                text: const TextSpan(
-                  style: TextStyle(fontSize: 15, color: Color(0xFF4B5563), height: 1.4),
+                text: TextSpan(
+                  style: const TextStyle(fontSize: 15, color: Color(0xFF4B5563), height: 1.4),
                   children: [
-                    TextSpan(text: "Kagua ujumbe wa SMS kwenye simu yako. Tumetuma tarakimu 6 kwa\n"),
+                    const TextSpan(text: "Kagua ujumbe wa SMS kwenye simu yako. Tumetuma tarakimu 6 kwa\n"),
                     TextSpan(
-                      text: '+255 ••• ••• 89',
-                      style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF111827), fontSize: 16),
+                      text: appState.pendingIdentifier ?? '+255 ••• ••• 89',
+                      style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF111827), fontSize: 16),
                     ),
                   ],
                 ),
@@ -141,7 +143,26 @@ class _OtpScreenState extends State<OtpScreen> {
                   );
                 }),
               ),
-              const SizedBox(height: 24),
+              if (appState.debugOtp != null) ...[
+                Text(
+                  'OTP (development): ${appState.debugOtp}',
+                  style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.primaryGreen),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (appState.pendingOtpPurpose == 'reset') ...[
+                TextField(
+                  controller: _newPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Neno la siri jipya',
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Resend Timer Pill in Swahili
               Container(

@@ -1,17 +1,38 @@
-# kuku_diary
+# KUKU DIARY
 
-A new Flutter project.
+Smart poultry management app (Flutter) with a Django + PostgreSQL backend.
 
-## Getting Started
+- Mobile app: this repository (`lib/`)
+- Backend API: `backend/`
+- Database: PostgreSQL database named **kuku**
+- Production site: http://www.kukudiary.com
 
-This project is a starting point for a Flutter application.
+## Backend
 
-A few resources to get you started if this is your first Flutter project:
+See [backend/README.md](backend/README.md).
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Local development on this machine uses a user-owned PostgreSQL cluster on **port 5433** (database `kuku`, user `kuku`):
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+cd backend
+./start_local_postgres.sh
+source .venv/bin/activate
+python manage.py runserver 0.0.0.0:8000
+```
+
+```bash
+cd backend
+./start_local_postgres.sh
+source .venv/bin/activate
+python manage.py runserver 0.0.0.0:8000
+```
+
+API health: http://127.0.0.1:8000/api/health/
+
+Admin: http://127.0.0.1:8000/admin/
+
+The Flutter app (debug builds) talks to `http://192.168.1.52:8000/api`. Release builds use `http://www.kukudiary.com/api`. Override with:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://YOUR_LAN_IP:8000/api
+```

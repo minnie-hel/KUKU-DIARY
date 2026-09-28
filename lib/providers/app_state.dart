@@ -1,345 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/models.dart';
+import '../services/api_service.dart';
+import '../utils/l10n.dart';
 
 class AppState extends ChangeNotifier {
-  // Navigation / Route state
-  String _currentRoute = 'splash'; // splash, onboarding, login, register, otp, farm_setup, main_shell
-  int _currentBottomNavIndex = 0; // 0: Dashboard, 1: Records, 2: Marketplace, 3: Notifications, 4: Profile
-  String _activeDrawerModule = 'dashboard'; // dashboard, veterinary, training, marketplace, production, feed, vaccination, finance, reports, calendar, ai_assistant, notifications, profile, settings
+  final ApiService _api = ApiService();
 
-  // Settings state
+  String _currentRoute = 'splash';
+  int _currentBottomNavIndex = 0;
+  String _activeDrawerModule = 'dashboard';
+
   bool _isDarkMode = false;
-  String _selectedLanguage = 'sw'; // 'sw' for Swahili, 'en' for English
+  String _selectedLanguage = 'sw';
+  bool _isBusy = false;
+  String? _errorMessage;
+  String? _debugOtp;
+  String? _pendingIdentifier;
+  String _pendingOtpPurpose = 'register';
+  bool _sessionReady = false;
 
-  // User & Farm Profile
-  final FarmProfile _farmProfile = FarmProfile(
-    farmerName: 'Juma Hamisi',
-    email: 'juma.hamisi@kukudiary.co.tz',
-    phone: '+255 712 345 678',
-    farmName: 'Kuku Bora Farm',
-    location: 'Kibaha, Pwani',
-    chickenType: 'Kuku wa Mayai (Layers)',
-    totalChickens: 450,
-    housingSystem: 'Mfumo wa Sakafu & Vituo',
-    status: 'Kawaida (Salama)',
-  );
-
-  // Today's Summary
-  final TodaySummary _todaySummary = TodaySummary(
-    eggsCollected: 380,
-    sickChickens: 2,
-    mortality: 0,
-    feedRemainingKg: 120.5,
-    todayIncomeTsz: 190000.0,
-    productivityPercentage: 84.4,
-  );
-
-  // Daily Production Logs
-  final List<ProductionLog> _productionLogs = [
-    ProductionLog(
-      date: DateTime.now().subtract(const Duration(days: 6)),
-      eggs: 350,
-      feedKg: 50.0,
-      waterLiters: 90.0,
-      mortality: 1,
-      birdAvgWeightKg: 1.8,
-      expensesTsz: 45000.0,
-    ),
-    ProductionLog(
-      date: DateTime.now().subtract(const Duration(days: 5)),
-      eggs: 365,
-      feedKg: 52.0,
-      waterLiters: 92.0,
-      mortality: 0,
-      birdAvgWeightKg: 1.82,
-      expensesTsz: 0.0,
-    ),
-    ProductionLog(
-      date: DateTime.now().subtract(const Duration(days: 4)),
-      eggs: 372,
-      feedKg: 51.0,
-      waterLiters: 91.0,
-      mortality: 0,
-      birdAvgWeightKg: 1.83,
-      expensesTsz: 12000.0,
-    ),
-    ProductionLog(
-      date: DateTime.now().subtract(const Duration(days: 3)),
-      eggs: 360,
-      feedKg: 50.0,
-      waterLiters: 90.0,
-      mortality: 0,
-      birdAvgWeightKg: 1.85,
-      expensesTsz: 0.0,
-    ),
-    ProductionLog(
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      eggs: 378,
-      feedKg: 53.0,
-      waterLiters: 95.0,
-      mortality: 1,
-      birdAvgWeightKg: 1.86,
-      expensesTsz: 30000.0,
-    ),
-    ProductionLog(
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      eggs: 385,
-      feedKg: 52.0,
-      waterLiters: 94.0,
-      mortality: 0,
-      birdAvgWeightKg: 1.87,
-      expensesTsz: 0.0,
-    ),
-    ProductionLog(
-      date: DateTime.now(),
-      eggs: 380,
-      feedKg: 54.0,
-      waterLiters: 96.0,
-      mortality: 0,
-      birdAvgWeightKg: 1.88,
-      expensesTsz: 15000.0,
-    ),
-  ];
-
-  // Feed Inventory Items
-  final List<FeedInventoryItem> _feedInventory = [
-    FeedInventoryItem(
-      name: 'Layer Mash (Chakula cha Kuku wa Mayai)',
-      currentStockKg: 120.5,
-      totalCapacityKg: 500.0,
-      type: 'Layer Mash',
-      costPerKg: 1400.0,
-    ),
-    FeedInventoryItem(
-      name: 'Chick Starter (Chakula cha Vifaranga)',
-      currentStockKg: 35.0,
-      totalCapacityKg: 200.0,
-      type: 'Starter',
-      costPerKg: 1800.0,
-    ),
-    FeedInventoryItem(
-      name: 'Grower Pellets (Chakula cha Kukua)',
-      currentStockKg: 15.0, // Low stock alert!
-      totalCapacityKg: 300.0,
-      type: 'Grower',
-      costPerKg: 1600.0,
-    ),
-  ];
-
-  // Vaccination Schedule
-  final List<VaccinationItem> _vaccinations = [
-    VaccinationItem(
-      diseaseName: 'Kideri / Marec (Newcastle Disease)',
-      vaccineName: 'Lasota / HB1',
-      targetAge: 'Siku ya 7',
-      scheduledDate: DateTime.now().subtract(const Duration(days: 20)),
-      isCompleted: true,
-      instructions: 'Weka kwenye maji ya kunywa asubuhi kabla ya jua kuwa kali.',
-    ),
-    VaccinationItem(
-      diseaseName: 'Gumboro (Infectious Bursal)',
-      vaccineName: 'Gumboro Intermediate',
-      targetAge: 'Siku ya 14',
-      scheduledDate: DateTime.now().subtract(const Duration(days: 13)),
-      isCompleted: true,
-      instructions: 'Changanya na maziwa ya unga kuzuia chlorine ya maji.',
-    ),
-    VaccinationItem(
-      diseaseName: 'Ndui ya Kuku (Fowl Pox)',
-      vaccineName: 'Fowl Pox Vaccine',
-      targetAge: 'Wiki ya 6 (Siku 42)',
-      scheduledDate: DateTime.now().add(const Duration(days: 4)),
-      isCompleted: false,
-      instructions: 'Choma kwenye bawa kwa kutumia sindano maalum ya mabawa miwili.',
-    ),
-    VaccinationItem(
-      diseaseName: 'Kideri Awamu ya Pili (Newcastle Booster)',
-      vaccineName: 'Lasota Booster',
-      targetAge: 'Wiki ya 10',
-      scheduledDate: DateTime.now().add(const Duration(days: 25)),
-      isCompleted: false,
-      instructions: 'Dondoshea tone moja kwenye jicho la kila kuku au kwenye maji.',
-    ),
-  ];
-
-  // Marketplace Items
-  final List<MarketplaceItem> _marketplaceItems = [
-    MarketplaceItem(
-      id: 'm1',
-      title: 'Trei za Mayai ya Kienyeji Safi',
-      category: 'Mayai',
-      price: 13500.0,
-      unit: 'TSh / Trei',
-      description: 'Mayai mapya kutoka shamba la kienyeji. Ni makubwa na ya njano kabisa.',
-      sellerName: 'Juma Hamisi',
-      sellerPhone: '+255 712 345 678',
-      location: 'Kibaha, Pwani',
-      imageUrl: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80',
-      isForSale: true,
-    ),
-    MarketplaceItem(
-      id: 'm2',
-      title: 'Chakula cha Kuku wa Mayai (Layer Mash 50kg)',
-      category: 'Vyakula',
-      price: 68000.0,
-      unit: 'TSh / Mfuko',
-      description: 'Chakula bora cha viwango vilivyothibitishwa kwa ajili ya kuongeza utagaji wa mayai.',
-      sellerName: 'Mifugo Feeds Co.',
-      sellerPhone: '+255 754 999 111',
-      location: 'Mbezi, Dar es Salaam',
-      imageUrl: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80',
-      isForSale: false,
-    ),
-    MarketplaceItem(
-      id: 'm3',
-      title: 'Vifaranga wa Siku Moja (Kuku wa Mayai - ISA Brown)',
-      category: 'Vifaranga',
-      price: 2800.0,
-      unit: 'TSh / Kifaranga',
-      description: 'Vifaranga waliopata chanjo ya Mareks siku ya kwanza. Afya bora 100%.',
-      sellerName: 'TanBroilers Hatchery',
-      sellerPhone: '+255 788 222 333',
-      location: 'Morogoro Mjini',
-      imageUrl: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80',
-      isForSale: false,
-    ),
-    MarketplaceItem(
-      id: 'm4',
-      title: 'Samadi ya Kuku (Kilio cha Rutuba 100kg)',
-      category: 'Samadi',
-      price: 15000.0,
-      unit: 'TSh / Mfuko',
-      description: 'Samadi kavu isiyo na harufu mbaya, inafaa kwa kilimo cha mboga na matunda.',
-      sellerName: 'Juma Hamisi',
-      sellerPhone: '+255 712 345 678',
-      location: 'Kibaha, Pwani',
-      imageUrl: 'https://images.unsplash.com/photo-1592417817098-8f3d6eb19657?auto=format&fit=crop&w=400&q=80',
-      isForSale: true,
-    ),
-  ];
-
-  // Financial Logs
-  final List<FinanceRecord> _financeRecords = [
-    FinanceRecord(
-      id: 'f1',
-      type: 'Mapato',
-      category: 'Mauzo ya Mayai',
-      amount: 190000.0,
-      date: DateTime.now(),
-      description: 'Mauzo ya trei 14 za mayai kwa duka la rejareja.',
-    ),
-    FinanceRecord(
-      id: 'f2',
-      type: 'Matumizi',
-      category: 'Vyakula',
-      amount: 68000.0,
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      description: 'Ununuzi wa mfuko mmoja wa Layer Mash 50kg.',
-    ),
-    FinanceRecord(
-      id: 'f3',
-      type: 'Matumizi',
-      category: 'Dawa & Chanjo',
-      amount: 15000.0,
-      date: DateTime.now().subtract(const Duration(days: 4)),
-      description: 'Ununuzi wa chanjo ya Gumboro & Multivitamin.',
-    ),
-    FinanceRecord(
-      id: 'f4',
-      type: 'Mapato',
-      category: 'Mauzo ya Kuku',
-      amount: 240000.0,
-      date: DateTime.now().subtract(const Duration(days: 5)),
-      description: 'Mauzo ya kuku 20 waliomaliza kutaga.',
-    ),
-  ];
-
-  // Notifications List
-  final List<AppNotification> _notifications = [
-    AppNotification(
-      id: 'n1',
-      title: 'Kumbukumbu ya Chanjo!',
-      message: 'Siku 4 zimebaki kabla ya kuchoma Chanjo ya Ndui ya Kuku (Fowl Pox).',
-      time: DateTime.now().subtract(const Duration(hours: 2)),
-      type: 'Chanjo',
-      isRead: false,
-    ),
-    AppNotification(
-      id: 'n2',
-      title: 'Tahadhari ya Akiba ya Chakula',
-      message: 'Akiba ya Grower Pellets iko chini ya 15% (15kg zimebaki). Tafadhali ongeza akiba.',
-      time: DateTime.now().subtract(const Duration(hours: 5)),
-      type: 'Chakula',
-      isRead: false,
-    ),
-    AppNotification(
-      id: 'n3',
-      title: 'Oda Mpya Sokoni!',
-      message: 'Mteja Hashim anataka kununua Trei 5 za Mayai.',
-      time: DateTime.now().subtract(const Duration(days: 1)),
-      type: 'Soko',
-      isRead: true,
-    ),
-  ];
-
-  // AI Chat Messages
-  final List<ChatMessage> _chatMessages = [
-    ChatMessage(
-      sender: 'kuku_ai',
-      text: 'Habari Juma! Mimi ni KukuAI - Msaidizi wako wa digitali wa ufugaji kuku. Una swali gani leo kuhusu afya, utagaji au lishe ya kuku wako?',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-    ),
-  ];
-
-  // List of Vets
-  final List<VetProfile> _vets = [
-    VetProfile(
-      id: 'v1',
-      name: 'Dr. Elizabeth Mwangi',
-      specialty: 'Daktari wa Ndege na Kuku',
-      location: 'Kibaha, Pwani',
-      rating: 4.9,
-      reviewCount: 42,
-      phone: '+255 754 111 222',
-      isAvailable: true,
-    ),
-    VetProfile(
-      id: 'v2',
-      name: 'Dr. Hassan Juma',
-      specialty: 'Mtaalamu wa Magonjwa ya Kuku',
-      location: 'Dar es Salaam',
-      rating: 4.8,
-      reviewCount: 38,
-      phone: '+255 788 333 444',
-      isAvailable: true,
-    ),
-  ];
-
-  // Sick Chicken Reports History
+  FarmProfile _farmProfile = FarmProfile.empty();
+  TodaySummary _todaySummary = TodaySummary.empty();
+  final List<PoultryBatch> _poultryBatches = [];
+  final List<ProductionLog> _productionLogs = [];
+  final List<FeedInventoryItem> _feedInventory = [];
+  final List<VaccinationItem> _vaccinations = [];
+  final List<MarketplaceItem> _marketplaceItems = [];
+  final List<ServiceProvider> _serviceProviders = [];
+  final List<TrainingModule> _trainingModules = [];
+  final List<CommunityPost> _communityPosts = [];
+  final List<FinanceRecord> _financeRecords = [];
+  final List<AppNotification> _notifications = [];
+  final List<ChatMessage> _chatMessages = [];
+  final List<VetProfile> _vets = [];
+  final List<VetConsultation> _vetConsultations = [];
   final List<SickChickenReport> _sickChickenReports = [];
 
-  // Getters
+  String tr(String key) => L10n.tr(_selectedLanguage, key);
+
   String get currentRoute => _currentRoute;
   int get currentBottomNavIndex => _currentBottomNavIndex;
   String get activeDrawerModule => _activeDrawerModule;
   bool get isDarkMode => _isDarkMode;
   String get selectedLanguage => _selectedLanguage;
+  bool get isBusy => _isBusy;
+  String? get errorMessage => _errorMessage;
+  String? get debugOtp => _debugOtp;
+  String? get pendingIdentifier => _pendingIdentifier;
+  String get pendingOtpPurpose => _pendingOtpPurpose;
+  bool get isLoggedIn => _api.token != null && _api.token!.isNotEmpty;
   FarmProfile get farmProfile => _farmProfile;
   TodaySummary get todaySummary => _todaySummary;
+  List<PoultryBatch> get poultryBatches => _poultryBatches;
   List<ProductionLog> get productionLogs => _productionLogs;
   List<FeedInventoryItem> get feedInventory => _feedInventory;
   List<VaccinationItem> get vaccinations => _vaccinations;
   List<MarketplaceItem> get marketplaceItems => _marketplaceItems;
+  List<ServiceProvider> get serviceProviders => _serviceProviders;
+  List<TrainingModule> get trainingModules => _trainingModules;
+  List<CommunityPost> get communityPosts => _communityPosts;
   List<FinanceRecord> get financeRecords => _financeRecords;
   List<AppNotification> get notifications => _notifications;
   List<ChatMessage> get chatMessages => _chatMessages;
   List<SickChickenReport> get sickChickenReports => _sickChickenReports;
+  List<VetConsultation> get vetConsultations => _vetConsultations;
   List<VetProfile> get vets => _vets;
-
   int get unreadNotificationsCount => _notifications.where((n) => !n.isRead).length;
   int get unreadNotificationCount => unreadNotificationsCount;
 
-  // State Modifiers
+  Future<void>? _restoreJob;
+
+  AppState() {
+    restoreSession();
+  }
+
+  Future<void> restoreSession() {
+    return _restoreJob ??= _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    _api.token = prefs.getString('auth_token');
+    _sessionReady = true;
+    if (_api.token == null || _api.token!.isEmpty) {
+      notifyListeners();
+      return;
+    }
+    try {
+      await refreshFromServer();
+    } catch (_) {
+      _api.token = null;
+      await prefs.remove('auth_token');
+      notifyListeners();
+    }
+  }
 
   void setRoute(String route) {
     _currentRoute = route;
@@ -353,19 +109,53 @@ class AppState extends ChangeNotifier {
         _activeDrawerModule = 'dashboard';
         break;
       case 1:
-        _activeDrawerModule = 'production';
+        _activeDrawerModule = 'veterinary';
         break;
       case 2:
         _activeDrawerModule = 'marketplace';
         break;
       case 3:
-        _activeDrawerModule = 'notifications';
+        _activeDrawerModule = 'vaccination';
         break;
       case 4:
-        _activeDrawerModule = 'profile';
+        _activeDrawerModule = 'production';
         break;
     }
     notifyListeners();
+  }
+
+  Future<void> completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_seen', true);
+    setRoute('login');
+  }
+
+  Future<String> resolvePostSplashRoute() async {
+    await restoreSession();
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('onboarding_seen') ?? false;
+    if (isLoggedIn && _farmProfile.setupComplete) return 'main_shell';
+    if (isLoggedIn) return 'farm_setup';
+    if (seen) return 'login';
+    return 'onboarding';
+  }
+
+  int feedDaysRemainingEstimate() {
+    if (_feedInventory.isEmpty) return 0;
+    final stock = _todaySummary.feedRemainingKg;
+    if (stock <= 0) return 0;
+    final logs = _productionLogs;
+    final dailyUse = logs.isNotEmpty ? logs.last.feedKg : 0;
+    if (dailyUse <= 0) return 0;
+    return (stock / dailyUse).ceil();
+  }
+
+  String greetingForNow() {
+    final hour = DateTime.now().hour;
+    final isSw = _selectedLanguage == 'sw';
+    if (hour < 12) return isSw ? 'Habari za Asubuhi' : 'Good Morning';
+    if (hour < 17) return isSw ? 'Habari za Mchana' : 'Good Afternoon';
+    return isSw ? 'Habari za Jioni' : 'Good Evening';
   }
 
   void setActiveDrawerModule(String moduleName) {
@@ -377,73 +167,352 @@ class AppState extends ChangeNotifier {
   void toggleDarkMode() {
     _isDarkMode = !_isDarkMode;
     notifyListeners();
+    _api.updateSettings({'is_dark_mode': _isDarkMode});
   }
 
   void setLanguage(String lang) {
     _selectedLanguage = lang;
     notifyListeners();
+    _api.updateSettings({'language': lang});
   }
 
-  void updateFarmSetup({
+  Future<void> _storeToken(String token) async {
+    _api.token = token;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+  }
+
+  Future<void> _clearToken() async {
+    _api.token = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+  }
+
+  List<T> _list<T>(dynamic raw, T Function(Map<String, dynamic>) map) {
+    if (raw is! List) return [];
+    return raw.whereType<Map>().map((e) => map(Map<String, dynamic>.from(e))).toList();
+  }
+
+  void _applyBootstrap(Map<String, dynamic> data) {
+    if (data['farm_profile'] is Map) {
+      _farmProfile = FarmProfile.fromJson(Map<String, dynamic>.from(data['farm_profile'] as Map));
+    }
+    if (data['today_summary'] is Map) {
+      _todaySummary = TodaySummary.fromJson(Map<String, dynamic>.from(data['today_summary'] as Map));
+    }
+    if (data['settings'] is Map) {
+      final settings = Map<String, dynamic>.from(data['settings'] as Map);
+      _isDarkMode = settings['is_dark_mode'] == true;
+      _selectedLanguage = settings['language']?.toString() ?? _selectedLanguage;
+    }
+    _poultryBatches
+      ..clear()
+      ..addAll(_list(data['poultry_batches'], PoultryBatch.fromJson));
+    _productionLogs
+      ..clear()
+      ..addAll(_list(data['production_logs'], ProductionLog.fromJson));
+    _feedInventory
+      ..clear()
+      ..addAll(_list(data['feed_inventory'], FeedInventoryItem.fromJson));
+    _vaccinations
+      ..clear()
+      ..addAll(_list(data['vaccinations'], VaccinationItem.fromJson));
+    _marketplaceItems
+      ..clear()
+      ..addAll(_list(data['marketplace_items'], MarketplaceItem.fromJson));
+    _serviceProviders
+      ..clear()
+      ..addAll(_list(data['service_providers'], ServiceProvider.fromJson));
+    _trainingModules
+      ..clear()
+      ..addAll(_list(data['training_modules'], TrainingModule.fromJson));
+    _communityPosts
+      ..clear()
+      ..addAll(_list(data['community_posts'], CommunityPost.fromJson));
+    _financeRecords
+      ..clear()
+      ..addAll(_list(data['finance_records'], FinanceRecord.fromJson));
+    _notifications
+      ..clear()
+      ..addAll(_list(data['notifications'], AppNotification.fromJson));
+    _chatMessages
+      ..clear()
+      ..addAll(_list(data['chat_messages'], ChatMessage.fromJson));
+    _vets
+      ..clear()
+      ..addAll(_list(data['vets'], VetProfile.fromJson));
+    _vetConsultations
+      ..clear()
+      ..addAll(_list(data['vet_consultations'], VetConsultation.fromJson));
+    _sickChickenReports
+      ..clear()
+      ..addAll(_list(data['sick_chicken_reports'], SickChickenReport.fromJson));
+  }
+
+  Future<void> refreshFromServer() async {
+    final data = await _api.bootstrap();
+    _applyBootstrap(data);
+    notifyListeners();
+  }
+
+  Future<void> _afterAuth(Map<String, dynamic> payload, {required bool fromRegister}) async {
+    final token = payload['token']?.toString();
+    if (token == null || token.isEmpty) {
+      throw ApiException('No auth token returned.');
+    }
+    await _storeToken(token);
+    await refreshFromServer();
+    if (fromRegister || _farmProfile.setupComplete == false) {
+      _currentRoute = 'farm_setup';
+    } else {
+      _currentRoute = 'main_shell';
+      _activeDrawerModule = 'dashboard';
+    }
+    notifyListeners();
+  }
+
+  Future<String?> register({
+    required String farmerName,
+    required String phone,
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    _isBusy = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final data = await _api.register(
+        farmerName: farmerName,
+        phone: phone,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
+      await _afterAuth(data, fromRegister: true);
+      return null;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> login(String identifier, String password) async {
+    _isBusy = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final data = await _api.login(identifier, password);
+      await _afterAuth(data, fromRegister: false);
+      return null;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> requestPasswordReset(String identifier) async {
+    _isBusy = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final data = await _api.forgotPassword(identifier);
+      _pendingIdentifier = data['identifier']?.toString() ?? identifier;
+      _pendingOtpPurpose = 'reset';
+      _debugOtp = data['otp']?.toString();
+      return _debugOtp;
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> verifyOtp(String code, {String? newPassword}) async {
+    final identifier = _pendingIdentifier;
+    if (identifier == null || identifier.isEmpty) {
+      throw ApiException('No phone/email pending verification.');
+    }
+    _isBusy = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final data = await _api.verifyOtp(
+        identifier: identifier,
+        code: code,
+        purpose: _pendingOtpPurpose,
+        newPassword: newPassword,
+      );
+      if (data['token'] != null) {
+        await _afterAuth(data, fromRegister: _pendingOtpPurpose == 'register');
+      } else {
+        _currentRoute = 'login';
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> logout() async {
+    await _api.logout();
+    await _clearToken();
+    _farmProfile = FarmProfile.empty();
+    _todaySummary = TodaySummary.empty();
+    _poultryBatches.clear();
+    _productionLogs.clear();
+    _feedInventory.clear();
+    _vaccinations.clear();
+    _marketplaceItems.clear();
+    _communityPosts.clear();
+    _financeRecords.clear();
+    _notifications.clear();
+    _chatMessages.clear();
+    _vetConsultations.clear();
+    _sickChickenReports.clear();
+    _currentRoute = 'login';
+    notifyListeners();
+  }
+
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    final data = await _api.changePassword(oldPassword, newPassword);
+    final token = data['token']?.toString();
+    if (token != null) await _storeToken(token);
+  }
+
+  Future<void> updateFarmSetup({
     required String farmName,
     required String location,
     required String chickenType,
     required int totalChickens,
     required String housingSystem,
-  }) {
-    _farmProfile.farmName = farmName;
-    _farmProfile.location = location;
-    _farmProfile.chickenType = chickenType;
-    _farmProfile.totalChickens = totalChickens;
-    _farmProfile.housingSystem = housingSystem;
-    _currentRoute = 'main_shell';
-    _activeDrawerModule = 'dashboard';
+    String farmSize = '',
+    double latitude = 0,
+    double longitude = 0,
+    String? farmerName,
+    String? phone,
+  }) async {
+    _isBusy = true;
+    _errorMessage = null;
     notifyListeners();
-  }
-
-  void addProductionLog(ProductionLog log) {
-    _productionLogs.add(log);
-    _todaySummary.eggsCollected = log.eggs;
-    _todaySummary.mortality += log.mortality;
-    _todaySummary.feedRemainingKg = (_todaySummary.feedRemainingKg - log.feedKg).clamp(0.0, 9999.0);
-    _todaySummary.productivityPercentage = (log.eggs / _farmProfile.totalChickens) * 100;
-    notifyListeners();
-  }
-
-  void addMarketplaceItem(MarketplaceItem item) {
-    _marketplaceItems.insert(0, item);
-    notifyListeners();
-  }
-
-  void addFeedStock(String feedName, double additionalKg) {
-    for (var item in _feedInventory) {
-      if (item.name == feedName) {
-        item.currentStockKg += additionalKg;
-        break;
-      }
+    try {
+      _farmProfile = await _api.updateFarm({
+        'farmer_name': farmerName ?? _farmProfile.farmerName,
+        'email': _farmProfile.email,
+        'phone': phone ?? _farmProfile.phone,
+        'farm_name': farmName,
+        'location': location,
+        'chicken_type': chickenType,
+        'total_chickens': totalChickens,
+        'housing_system': housingSystem,
+        'farm_size': farmSize,
+        'latitude': latitude,
+        'longitude': longitude,
+      });
+      _currentRoute = 'main_shell';
+      _activeDrawerModule = 'dashboard';
+      await refreshFromServer();
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
     }
+  }
+
+  Future<void> updateFarmGps(double latitude, double longitude, {String? location}) async {
+    _farmProfile = await _api.updateFarm({
+      ..._farmProfile.toJson(),
+      'latitude': latitude,
+      'longitude': longitude,
+      if (location != null) 'location': location,
+    });
     notifyListeners();
   }
 
-  void toggleVaccinationCompleted(int index) {
-    _vaccinations[index].isCompleted = !_vaccinations[index].isCompleted;
+  Future<void> addPoultryBatch(PoultryBatch batch) async {
+    final created = await _api.createBatch(batch);
+    _poultryBatches.insert(0, created);
+    _farmProfile.totalChickens += created.quantity;
+    notifyListeners();
+    await refreshFromServer();
+  }
+
+  Future<void> addProductionLog(ProductionLog log) async {
+    await _api.createProductionLog(log);
+    await refreshFromServer();
+  }
+
+  Future<void> addFeedStock(String type, double kgAdded) async {
+    await _api.addFeedStock(type, kgAdded);
+    await refreshFromServer();
+  }
+
+  Future<void> addMarketplaceItem(MarketplaceItem item) async {
+    final created = await _api.createMarketplaceItem(item);
+    _marketplaceItems.insert(0, created);
     notifyListeners();
   }
 
-  void addVaccinationSchedule(VaccinationItem item) {
-    _vaccinations.insert(0, item);
-    // Automatically trigger notification for the user
-    _notifications.insert(
-      0,
-      AppNotification(
-        id: 'v_notif_${DateTime.now().millisecondsSinceEpoch}',
-        title: 'Kumbukumbu ya Chanjo: ${item.diseaseName}',
-        message: 'Chanjo ya ${item.diseaseName} (${item.vaccineName}) imewekwa kwenye kalenda kwa ajili ya ${item.targetAge}. Tarehe: ${item.scheduledDate.day}/${item.scheduledDate.month}/${item.scheduledDate.year}.',
-        time: DateTime.now(),
-        type: 'Chanjo',
-        isRead: false,
-      ),
-    );
+  Future<void> toggleVaccinationCompleted(int index) async {
+    final item = _vaccinations[index];
+    final updated = await _api.patchVaccination(item.id, {'is_completed': !item.isCompleted});
+    _vaccinations[index] = updated;
+    notifyListeners();
+  }
+
+  Future<void> addVaccinationSchedule(VaccinationItem item) async {
+    await _api.createVaccination(item);
+    await refreshFromServer();
+  }
+
+  Future<void> bookVetConsultation({
+    required String vetId,
+    required String vetName,
+    required String consultationType,
+    required String symptomsOrNotes,
+    String? mediaUrl,
+  }) async {
+    await _api.bookConsultation({
+      'vet_id': vetId,
+      'vet_name': vetName,
+      'consultation_type': consultationType,
+      'symptoms_or_notes': symptomsOrNotes,
+      'requested_time': DateTime.now().add(const Duration(hours: 2)).toIso8601String(),
+      'uploaded_media_url': mediaUrl ?? '',
+    });
+    await refreshFromServer();
+  }
+
+  Future<void> addCommunityPost(String title, String content, String? imageUrl) async {
+    final created = await _api.createCommunityPost(title, content);
+    _communityPosts.insert(0, created);
+    notifyListeners();
+  }
+
+  Future<void> togglePostLike(String postId) async {
+    final updated = await _api.toggleLike(postId);
+    final index = _communityPosts.indexWhere((p) => p.id == postId);
+    if (index != -1) _communityPosts[index] = updated;
+    notifyListeners();
+  }
+
+  Future<void> addCommentToPost(String postId, String commentText) async {
+    final updated = await _api.addComment(postId, commentText);
+    final index = _communityPosts.indexWhere((p) => p.id == postId);
+    if (index != -1) _communityPosts[index] = updated;
     notifyListeners();
   }
 
@@ -452,106 +521,41 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addFinanceRecord(FinanceRecord record) {
-    _financeRecords.insert(0, record);
-    if (record.type == 'Mapato') {
-      _todaySummary.todayIncomeTsz += record.amount;
-    }
+  Future<void> addFinanceRecord(FinanceRecord record) async {
+    await _api.createFinance(record);
+    await refreshFromServer();
+  }
+
+  Future<void> markNotificationAsRead(String id) async {
+    final updated = await _api.markNotificationRead(id);
+    final index = _notifications.indexWhere((n) => n.id == id);
+    if (index != -1) _notifications[index] = updated;
     notifyListeners();
   }
 
-  void markNotificationAsRead(String id) {
-    for (var n in _notifications) {
-      if (n.id == id) {
-        n.isRead = true;
-        break;
-      }
-    }
-    notifyListeners();
-  }
-
-  void clearNotifications() {
+  Future<void> clearNotifications() async {
+    await _api.clearNotifications();
     _notifications.clear();
     notifyListeners();
   }
 
-  // AI Chat Assistant Logic in Swahili
-  void sendChatMessage(String text) {
-    _chatMessages.add(ChatMessage(
-      sender: 'user',
-      text: text,
-      timestamp: DateTime.now(),
-    ));
+  Future<void> sendChatMessage(String text) async {
+    _chatMessages.add(ChatMessage(sender: 'user', text: text, timestamp: DateTime.now()));
     notifyListeners();
-
-    // Simulate AI response
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      String responseText = _generateAIResponse(text);
-      _chatMessages.add(ChatMessage(
-        sender: 'kuku_ai',
-        text: responseText,
-        timestamp: DateTime.now(),
-        isVetRecommendation: text.toLowerCase().contains('ugonjwa') || text.toLowerCase().contains('dawa') || text.toLowerCase().contains('kufa'),
-      ));
+    try {
+      await _api.sendChat(text);
+      await refreshFromServer();
+    } catch (e) {
+      _errorMessage = e.toString();
       notifyListeners();
-    });
-  }
-
-  String _generateAIResponse(String prompt) {
-    String p = prompt.toLowerCase();
-    if (p.contains('mayai') && (p.contains('kupungua') || p.contains('hawatagi'))) {
-      return 'Kupungua kwa utagaji wa mayai kunaweza kusababishwa na:\n1. Mabadiliko ya chakula au chakula kisicho na protini ya kutosha (inahitajika 16-18%).\n2. Ukosefu wa maji safi na baridi.\n3. Msongo wa mawazo (Stress) mfano kelele au joto kali.\n4. Magonjwa kama Kideri (Newcastle) au Typhoid.\n\nUshauri: Hakikisha chakula kina calcium (chokaa) na maji yapo wakati wote.';
-    } else if (p.contains('kula') || p.contains('hawali')) {
-      return 'Kuku kutokula kunaashiria dalili za awali za ugonjwa au joto kali bandani.\n1. Angalia kama wanakohoa au kutoa kamasi.\n2. Angalia kinyesi chao (kama ni cha kijani, cheupe au cha damu).\n3. Wape maji yaliyochanganywa na Multivitamin na Glucose mara moja.';
-    } else if (p.contains('kideri') || p.contains('newcastle')) {
-      return 'Kideri ni ugonjwa wa virusi hatari sana. Dalili ni pamoja na kuku kupinda shingo, kinyesi cha kijani kibichi na kupooza.\n\nTiba: Hakuna tiba ya moja kwa moja ya virusi. Wape Multivitamin + Antibiotic kuzuia maambukizi ya sekondari. Hakikisha unawapa Chanjo ya Lasota mapema!';
-    } else if (p.contains('dawa') || p.contains('nini')) {
-      return 'Kabla ya kutoa dawa, ni muhimu kutambua chanzo cha tatizo. Kwa matatizo ya mfumo wa hewa (mafua), tumia Tylosin au Doxycycline. Kwa kinyesi cha damu (Coccidiosis), tumia Amprolium au ESB3.';
-    } else {
-      return 'Asante kwa swali lako. Kwa uzoefu wa KUKU DIARY, inashauriwa kufuatilia lishe bora, usafi wa banda, na chanjo kwa wakati. Kama dalili zinaendelea, tunashauri uweke miadi na Daktari wa Mifugo aliye karibu nawe.';
     }
   }
 
-  // Sick Chicken AI Visual Diagnosis Simulation
-  SickChickenReport performAIDiagnosis(String symptoms, String? imagePath) {
-    SickChickenReport report;
-    if (symptoms.toLowerCase().contains('kamasi') || symptoms.toLowerCase().contains('macho') || symptoms.toLowerCase().contains('mafua')) {
-      report = SickChickenReport(
-        timestamp: DateTime.now(),
-        symptomsText: symptoms,
-        imageOrVideoUrl: imagePath,
-        diagnosedDisease: 'Mafua ya Kuku (Infectious Coryza)',
-        confidenceLevel: '92%',
-        urgency: 'Kawaida',
-        recommendedAction: 'Tenga kuku wagonjwa mara moja kwenye banda la karantini. Safisha vyombo vya maji kwa dawa ya kuua vijidudu.',
-        recommendedMedicines: ['Tylosin Powder', 'Doxycycline 20%', 'Multivitamin Stress Pack'],
-      );
-    } else if (symptoms.toLowerCase().contains('damu') || symptoms.toLowerCase().contains('kinyesi cha damu')) {
-      report = SickChickenReport(
-        timestamp: DateTime.now(),
-        symptomsText: symptoms,
-        imageOrVideoUrl: imagePath,
-        diagnosedDisease: 'Kuhara Damu (Coccidiosis)',
-        confidenceLevel: '95%',
-        urgency: 'Ya Dharura',
-        recommendedAction: 'Badilisha pumba au maranda ya chini (litter) kwani yana unyevu. Weka dawa kwenye maji kwa siku 5 mfululizo.',
-        recommendedMedicines: ['Amprolium 20%', 'ESB3 Powder', 'Vitamin K3'],
-      );
-    } else {
-      report = SickChickenReport(
-        timestamp: DateTime.now(),
-        symptomsText: symptoms,
-        imageOrVideoUrl: imagePath,
-        diagnosedDisease: 'Kideri / Newcastle Disease (Hatua ya Awali)',
-        confidenceLevel: '88%',
-        urgency: 'Ya Dharura',
-        recommendedAction: 'Choma chanjo kwa kuku salama waliobaki. Weka kuku wenye ugonjwa mbali na kundi kuu.',
-        recommendedMedicines: ['Lasota Vaccine', 'Antibiotics for Secondary Infection', 'Vitalytes Plus'],
-      );
-    }
+  Future<SickChickenReport> performAIDiagnosis(String symptoms, String? imagePath) async {
+    final report = await _api.diagnose(symptoms, imagePath);
     _sickChickenReports.insert(0, report);
-    _todaySummary.sickChickens += 1;
     notifyListeners();
+    await refreshFromServer();
     return report;
   }
 }

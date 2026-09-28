@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../../models/models.dart';
@@ -14,256 +15,219 @@ class VaccinationScreen extends StatefulWidget {
 class _VaccinationScreenState extends State<VaccinationScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  final _diseaseController = TextEditingController(text: 'Chanjo ya Ndui ya Kuku (Fowl Pox)');
-  final _vaccineController = TextEditingController(text: 'Pox-Vac Injection');
-  final _targetAgeController = TextEditingController(text: 'Wiki ya 3 (Siku ya 21)');
-  final _instructionsController = TextEditingController(text: 'Weka kwenye maji ya kunywa asubuhi au choma kwa sindano ya mabawa.');
-  DateTime _selectedDate = DateTime.now().add(const Duration(days: 7));
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _diseaseController.dispose();
-    _vaccineController.dispose();
-    _targetAgeController.dispose();
-    _instructionsController.dispose();
     super.dispose();
-  }
-
-  void _showAddVaccineModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.event_available_rounded, color: AppTheme.primaryGreen, size: 28),
-                        SizedBox(width: 10),
-                        Text('Panga Chanjo Mpya', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF111827))),
-                      ],
-                    ),
-                    IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(context)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Disease Name
-                const Text('Aina ya Ugonjwa au Chanjo', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _diseaseController,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    hintText: 'Mfano: Chanjo ya Kideri (Newcastle)',
-                    prefixIcon: const Icon(Icons.medical_services_outlined, color: AppTheme.primaryGreen),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD1D5DB))),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Vaccine Name
-                const Text('Jina la Dawa / Chanjo', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _vaccineController,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    hintText: 'Mfano: Lasota / HB1 / Gumboro',
-                    prefixIcon: const Icon(Icons.medication_outlined, color: Color(0xFF0284C7)),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Target Age
-                const Text('Umri wa Kuku Bandani', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _targetAgeController,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  decoration: InputDecoration(
-                    hintText: 'Mfano: Siku ya 7 au Wiki ya 3',
-                    prefixIcon: const Icon(Icons.pets_outlined, color: AppTheme.amberGold),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Date Picker Selector
-                const Text('Tarehe ya Kuchoma Chanjo', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 6),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate,
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setModalState(() {
-                        _selectedDate = picked;
-                      });
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.primaryGreen, width: 1.5),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_month_rounded, color: AppTheme.primaryGreen, size: 22),
-                            const SizedBox(width: 10),
-                            Text(
-                              '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppTheme.primaryGreen),
-                            ),
-                          ],
-                        ),
-                        const Text('Badili Tarehe', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryGreen, fontSize: 13)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Instructions
-                const Text('Maelekezo ya Matumizi', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _instructionsController,
-                  maxLines: 2,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  decoration: InputDecoration(
-                    hintText: 'Mfano: Weka kwenye maji safi ya kunywa asubuhi kabla ya jua kali.',
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Save Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (_diseaseController.text.isEmpty) return;
-
-                      final appState = Provider.of<AppState>(context, listen: false);
-                      final newVaccine = VaccinationItem(
-                        diseaseName: _diseaseController.text.trim(),
-                        vaccineName: _vaccineController.text.trim(),
-                        targetAge: _targetAgeController.text.trim(),
-                        scheduledDate: _selectedDate,
-                        instructions: _instructionsController.text.trim(),
-                        isCompleted: false,
-                      );
-
-                      appState.addVaccinationSchedule(newVaccine);
-                      Navigator.pop(context);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          backgroundColor: AppTheme.primaryGreen,
-                          content: Text(
-                            'Ratiba ya Chanjo imewasilishwa kwenye Kalenda na Taarifa (Notification) imetumwa kikamilifu!',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                    ),
-                    icon: const Icon(Icons.notifications_active_rounded, size: 24),
-                    label: const Text('HIFADHI NA TUMA NOTIFICATION', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final isSw = appState.selectedLanguage == 'sw';
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddVaccineModal(context),
-        backgroundColor: AppTheme.primaryGreen,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_alert_rounded, size: 24),
-        label: const Text('Panga Chanjo Mpya', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+      appBar: AppBar(
+        title: Text(isSw ? 'Kalenda ya Chanjo & Dawa' : 'Vaccination & Deworming'),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: AppTheme.amberGold,
+          indicatorWeight: 4,
+          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontSize: 14),
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          tabs: [
+            Tab(text: isSw ? 'Chanjo' : 'Vaccines'),
+            Tab(text: isSw ? 'Dawa & Deworming' : 'Deworming'),
+            Tab(text: isSw ? 'Muonekano Kalenda' : 'Calendar View'),
+          ],
+        ),
       ),
-      body: Column(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddScheduleDialog(context, appState, isSw),
+        backgroundColor: AppTheme.primaryGreen,
+        icon: const Icon(Icons.add_alert_rounded, color: Colors.white, size: 26),
+        label: Text(
+          isSw ? 'Weka Remainder' : 'Add Reminder',
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppTheme.primaryGreen,
-              unselectedLabelColor: const Color(0xFF6B7280),
-              indicatorColor: AppTheme.primaryGreen,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
-              tabs: const [
-                Tab(icon: Icon(Icons.event_repeat_rounded, size: 22), text: 'Chanjo Zinazokuja'),
-                Tab(icon: Icon(Icons.history_rounded, size: 22), text: 'Zilizokamilika'),
+          _buildVaccinesTab(context, appState, isSw, filterType: 'vaccine'),
+          _buildVaccinesTab(context, appState, isSw, filterType: 'deworming'),
+          _buildCalendarViewTab(context, appState, isSw),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVaccinesTab(BuildContext context, AppState appState, bool isSw, {required String filterType}) {
+    final list = appState.vaccinations.where((v) => filterType == 'deworming' ? v.itemType == 'deworming' : v.itemType != 'deworming').toList();
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        final item = list[index];
+        final itemIndex = appState.vaccinations.indexOf(item);
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 14),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.diseaseName,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                      ),
+                    ),
+                    Checkbox(
+                      value: item.isCompleted,
+                      activeColor: AppTheme.primaryGreen,
+                      onChanged: (val) {
+                        appState.toggleVaccinationCompleted(itemIndex);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: AppTheme.lightGreen, borderRadius: BorderRadius.circular(10)),
+                      child: Text(
+                        '${isSw ? 'Dawa/Chanjo' : 'Vaccine'}: ${item.vaccineName}',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: AppTheme.amberGold.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+                      child: Text(
+                        item.targetAge,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${isSw ? 'Tarehe' : 'Date'}: ${DateFormat('EEEE, dd MMMM yyyy').format(item.scheduledDate)}',
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  item.instructions,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700, height: 1.3),
+                ),
               ],
             ),
           ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildVaccineList(context, appState, isCompleted: false),
-                _buildVaccineList(context, appState, isCompleted: true),
-              ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCalendarViewTab(BuildContext context, AppState appState, bool isSw) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Card(
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        DateFormat('MMMM yyyy').format(DateTime.now()),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                      ),
+                      const Icon(Icons.calendar_month_rounded, color: AppTheme.amberGold, size: 30),
+                    ],
+                  ),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: const [
+                      Text('Jt', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Jn', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Jt', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Al', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Ij', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Jm', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text('Jp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, childAspectRatio: 1.0),
+                    itemCount: 31,
+                    itemBuilder: (ctx, idx) {
+                      final dayNum = idx + 1;
+                      final isToday = dayNum == DateTime.now().day;
+                      final hasVaccine = dayNum == 10 || dayNum == 25;
+                      return Container(
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: isToday ? AppTheme.primaryGreen : (hasVaccine ? AppTheme.amberGold.withValues(alpha: 0.3) : Colors.transparent),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$dayNum',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isToday || hasVaccine ? FontWeight.bold : FontWeight.normal,
+                              color: isToday ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            isSw ? 'Chanjo na Dawa Zinazofuata Kalendani:' : 'Upcoming Calendar Schedules:',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          ...appState.vaccinations.map(
+            (v) => ListTile(
+              leading: Icon(
+                v.isCompleted ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+                color: v.isCompleted ? Colors.green : AppTheme.amberGold,
+                size: 28,
+              ),
+              title: Text(v.diseaseName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              subtitle: Text('${v.vaccineName} • ${DateFormat('dd MMM yyyy').format(v.scheduledDate)}', style: const TextStyle(fontSize: 14)),
             ),
           ),
         ],
@@ -271,140 +235,86 @@ class _VaccinationScreenState extends State<VaccinationScreen> with SingleTicker
     );
   }
 
-  Widget _buildVaccineList(BuildContext context, AppState appState, {required bool isCompleted}) {
-    final filtered = appState.vaccinations.where((v) => v.isCompleted == isCompleted).toList();
+  void _showAddScheduleDialog(BuildContext context, AppState appState, bool isSw) {
+    final diseaseCtrl = TextEditingController();
+    final vaccineCtrl = TextEditingController();
+    final ageCtrl = TextEditingController();
+    final instructionsCtrl = TextEditingController();
+    String selectedType = 'vaccine';
 
-    if (filtered.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.event_available_rounded, size: 64, color: Colors.grey.shade300),
-            const SizedBox(height: 12),
-            Text(
-              isCompleted ? 'Hakuna chanjo zilizopita bado.' : 'Hakuna chanjo mpya zinazokusubiri kwenye kalenda!',
-              style: const TextStyle(color: Color(0xFF6B7280), fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: filtered.length,
-      itemBuilder: (context, index) {
-        final item = filtered[index];
-        final originalIndex = appState.vaccinations.indexOf(item);
-
-        return Card(
-          elevation: 3,
-          margin: const EdgeInsets.only(bottom: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isCompleted ? const Color(0xFFECFDF5) : const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isCompleted ? AppTheme.primaryGreen : AppTheme.amberGold),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isCompleted ? Icons.check_circle_rounded : Icons.alarm_rounded,
-                            size: 16,
-                            color: isCompleted ? AppTheme.primaryGreen : const Color(0xFFB45309),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            item.targetAge,
-                            style: TextStyle(
-                              color: isCompleted ? AppTheme.primaryGreen : const Color(0xFFB45309),
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${item.scheduledDate.day}/${item.scheduledDate.month}/${item.scheduledDate.year}',
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF4B5563)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                Text(
-                  item.diseaseName,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF111827)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Dawa / Chanjo: ${item.vaccineName}',
-                  style: const TextStyle(color: AppTheme.primaryGreen, fontWeight: FontWeight.w800, fontSize: 14),
-                ),
-                const SizedBox(height: 12),
-
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF6B7280)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          item.instructions,
-                          style: const TextStyle(fontSize: 13, color: Color(0xFF374151), height: 1.3, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      appState.toggleVaccinationCompleted(originalIndex);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isCompleted ? 'Chanjo imerudishwa kwenye orodha!' : 'Chanjo imewekwa alama ya LIMEKAMILIKA!',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      );
-                    },
-                    icon: Icon(isCompleted ? Icons.undo_rounded : Icons.check_circle_rounded, size: 20),
-                    label: Text(isCompleted ? 'RUDISHA NYUMA' : 'WEKA ALAMA IMEKAMILIKA', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isCompleted ? Colors.grey : AppTheme.primaryGreen,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isSw ? 'Weka Chanjo / Dawa Mpya' : 'Add Vaccine / Medicine Reminder', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: selectedType,
+                isExpanded: true,
+                decoration: InputDecoration(labelText: isSw ? 'Aina ya Ratiba' : 'Schedule Type'),
+                items: [
+                  DropdownMenuItem(value: 'vaccine', child: Text(isSw ? 'Chanjo (Vaccine)' : 'Vaccine', overflow: TextOverflow.ellipsis)),
+                  DropdownMenuItem(value: 'deworming', child: Text(isSw ? 'Dawa ya Tumbo (Deworming)' : 'Deworming', overflow: TextOverflow.ellipsis)),
+                ],
+                onChanged: (val) {
+                  if (val != null) selectedType = val;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: diseaseCtrl,
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(labelText: isSw ? 'Jina la Ugonjwa / Lengo' : 'Disease / Target'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: vaccineCtrl,
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(labelText: isSw ? 'Jina la Dawa / Chanjo' : 'Vaccine/Medicine Name'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: ageCtrl,
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(labelText: isSw ? 'Umri wa Kuku (Target Age)' : 'Target Age (e.g. Siku 21)'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: instructionsCtrl,
+                style: const TextStyle(fontSize: 16),
+                decoration: InputDecoration(labelText: isSw ? 'Maelekezo ya Utoaji' : 'Instructions'),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(isSw ? 'Ghairi' : 'Cancel', style: const TextStyle(fontSize: 16)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (diseaseCtrl.text.isNotEmpty && vaccineCtrl.text.isNotEmpty) {
+                appState.addVaccinationSchedule(
+                  VaccinationItem(
+                    id: 'v_${DateTime.now().millisecondsSinceEpoch}',
+                    diseaseName: diseaseCtrl.text,
+                    vaccineName: vaccineCtrl.text,
+                    targetAge: ageCtrl.text.isNotEmpty ? ageCtrl.text : 'Siku 21',
+                    scheduledDate: DateTime.now().add(const Duration(days: 7)),
+                    instructions: instructionsCtrl.text.isNotEmpty ? instructionsCtrl.text : 'Weka kwenye maji safi ya kunywa.',
+                    itemType: selectedType,
+                  ),
+                );
+                Navigator.pop(ctx);
+              }
+            },
+            child: Text(isSw ? 'Hifadhi Remainder' : 'Save Reminder', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 }

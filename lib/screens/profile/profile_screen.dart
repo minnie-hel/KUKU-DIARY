@@ -25,7 +25,7 @@ class ProfileScreen extends StatelessWidget {
                       radius: 46,
                       backgroundColor: AppTheme.amberGold,
                       child: Text(
-                        profile.farmerName[0],
+                        profile.initial,
                         style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                     ),

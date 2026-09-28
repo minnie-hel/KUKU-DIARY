@@ -150,6 +150,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
                       final appState = Provider.of<AppState>(context, listen: false);
                       final newVaccine = VaccinationItem(
+                        id: 'v_${DateTime.now().millisecondsSinceEpoch}',
                         diseaseName: _eventTitleController.text.trim(),
                         vaccineName: _selectedCategory,
                         targetAge: 'Ratiba ya Kalenda',

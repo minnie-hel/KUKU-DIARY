@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/tipa_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -18,9 +19,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
 
-  void _handleRegister() {
-    Provider.of<AppState>(context, listen: false).setRoute('otp');
+  Future<void> _handleRegister() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maneno ya siri hayafanani.')),
+      );
+      return;
+    }
+    if (_nameController.text.trim().isEmpty || _phoneController.text.trim().isEmpty || _passwordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jaza jina, namba ya simu na neno la siri (angalau herufi 6).')),
+      );
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    try {
+      await Provider.of<AppState>(context, listen: false).register(
+        farmerName: _nameController.text.trim(),
+        phone: _phoneController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -43,26 +71,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Gold Chicken Crest
-              Container(
-                width: 84,
-                height: 84,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.amberGold, width: 2.5),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.pets_rounded,
-                    size: 48,
-                    color: Color(0xFFB45309),
-                  ),
-                ),
-              ),
+              const TipaLogo(size: 88, showTitle: true),
               const SizedBox(height: 14),
-
-              // Title & Subtitle in Swahili
               const Text(
                 'Jiunge na Kuku Diary',
                 textAlign: TextAlign.center,
@@ -193,7 +203,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _handleRegister,
+                  onPressed: _isSubmitting ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,
                     foregroundColor: Colors.white,
@@ -205,17 +215,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Text(
-                        'TENGENEZA AKAUNTI',
-                        style: TextStyle(
+                        _isSubmitting ? 'INASUBIRI...' : 'TENGENEZA AKAUNTI',
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.5,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward_rounded, size: 24),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward_rounded, size: 24),
                     ],
                   ),
                 ),

@@ -33,6 +33,15 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Backend
+backend/.venv/
+backend/.env
+backend/.pgdata/
+backend/media/
+backend/staticfiles/
+**/__pycache__/
+*.pyc
+
 # Symbolication related
 app.*.symbols
 

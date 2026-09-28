@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
 
@@ -11,206 +12,192 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  String _selectedReportType = 'Uzalishaji wa Mayai';
-  String _selectedPeriod = 'Mwezi Huu (Siku 30)';
+  String _timeRange = 'Wiki Hii (7 Days)';
 
-  void _generateAndShowPdfPreview(BuildContext context) {
-    final appState = Provider.of<AppState>(context, listen: false);
-    final profile = appState.farmProfile;
+  @override
+  Widget build(BuildContext context) {
+    final appState = Provider.of<AppState>(context);
+    final isSw = appState.selectedLanguage == 'sw';
 
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+    // Summary calculations
+    int totalEggs = appState.productionLogs.fold(0, (sum, log) => sum + log.eggs);
+    int totalMortality = appState.productionLogs.fold(0, (sum, log) => sum + log.mortality);
+    double totalFeedKg = appState.productionLogs.fold(0.0, (sum, log) => sum + log.feedKg);
+    double totalIncome = appState.financeRecords.where((f) => f.type == 'Mapato').fold(0.0, (sum, f) => sum + f.amount);
+    double totalExpenses = appState.financeRecords.where((f) => f.type == 'Matumizi').fold(0.0, (sum, f) => sum + f.amount);
+    double netProfit = totalIncome - totalExpenses;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isSw ? 'Ripoti za Shamba & Utendaji' : 'Farm Reports & Analytics'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 26),
+            tooltip: isSw ? 'Pakua PDF' : 'Download PDF',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isSw
+                        ? 'Ripoti ya PDF ya ${appState.farmProfile.farmName} imepakuliwa kwenye simu!'
+                        : 'PDF Report downloaded to your device!',
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Time filter bar
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 28),
-                        SizedBox(width: 8),
-                        Text('PDF Report Preview', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      ],
-                    ),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                  ],
+                Text(
+                  isSw ? 'Muda wa Ripoti:' : 'Report Timeframe:',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const Divider(),
-                const SizedBox(height: 10),
-
-                // Mock Printable Document
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Text(
-                          'KUKU DIARY - RIPOTI YA SHAMBA',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryGreen),
-                        ),
-                      ),
-                      const Center(child: Text('Smart Poultry Management System', style: TextStyle(fontSize: 10, color: Colors.grey))),
-                      const SizedBox(height: 12),
-                      Text('Jina la Shamba: ${profile.farmName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      Text('Mfugaji: ${profile.farmerName} • Mahali: ${profile.location}', style: const TextStyle(fontSize: 11)),
-                      Text('Kipindi cha Ripoti: $_selectedPeriod', style: const TextStyle(fontSize: 11)),
-                      Text('Aina ya Ripoti: $_selectedReportType', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.indigo)),
-                      const SizedBox(height: 12),
-                      const Divider(),
-                      const SizedBox(height: 8),
-
-                      const Text('MUHTASARI WA TAKWIMU:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      const SizedBox(height: 6),
-                      Text('• Jumla ya Mayai Yaliyokusanywa: ${appState.todaySummary.eggsCollected * 30} Mayai'),
-                      Text('• Kiwango cha Uzalishaji (Productivity): ${appState.todaySummary.productivityPercentage.toStringAsFixed(1)}%'),
-                      Text('• Matumizi ya Chakula: 1,560 kg'),
-                      Text('• Jumla ya Vifo: ${appState.todaySummary.mortality} Kuku'),
-                      Text('• Jumla ya Mapato: TSh ${(appState.todaySummary.todayIncomeTsz * 20).toStringAsFixed(0)}'),
-                      const SizedBox(height: 16),
-                      const Center(
-                        child: Text('KUKU DIARY Official Verified Seal ✓', style: TextStyle(fontSize: 10, fontStyle: FontStyle.italic, color: Colors.grey)),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Ripoti ya PDF imepakuliwa kwenye simu yako!')),
-                          );
-                        },
-                        icon: const Icon(Icons.download_rounded),
-                        label: const Text('PAKUA PDF'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Ripoti imetumwa kwenye printer!')),
-                        );
-                      },
-                      icon: const Icon(Icons.print_rounded),
-                      label: const Text('PRINT'),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGreen),
-                    ),
-                  ],
+                DropdownButton<String>(
+                  value: _timeRange,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                  items: ['Wiki Hii (7 Days)', 'Mwezi Huu (30 Days)', 'Mwaka Huu (Yearly)']
+                      .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _timeRange = val;
+                      });
+                    }
+                  },
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 16),
+
+            // Report Cards Grid (Egg Production, Mortality, Feed, Income, Expense, Profit)
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 1.35,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              children: [
+                _buildReportCard(
+                  title: isSw ? 'Mayai Yaliyokusanywa' : 'Egg Production',
+                  value: '$totalEggs ${isSw ? 'Mayai' : 'Eggs'}',
+                  icon: Icons.egg_rounded,
+                  color: AppTheme.amberGold,
+                ),
+                _buildReportCard(
+                  title: isSw ? 'Vifo vya Kuku' : 'Mortality Count',
+                  value: '$totalMortality ${isSw ? 'Kuku' : 'Birds'}',
+                  icon: Icons.warning_amber_rounded,
+                  color: Colors.red,
+                ),
+                _buildReportCard(
+                  title: isSw ? 'Chakula Kilicholiwa' : 'Feed Consumed',
+                  value: '${totalFeedKg.toStringAsFixed(1)} kg',
+                  icon: Icons.rice_bowl_rounded,
+                  color: Colors.green,
+                ),
+                _buildReportCard(
+                  title: isSw ? 'Jumla ya Mapato' : 'Total Income',
+                  value: 'TSh ${NumberFormat('#,###').format(totalIncome)}',
+                  icon: Icons.trending_up_rounded,
+                  color: AppTheme.primaryGreen,
+                ),
+                _buildReportCard(
+                  title: isSw ? 'Jumla ya Matumizi' : 'Total Expenses',
+                  value: 'TSh ${NumberFormat('#,###').format(totalExpenses)}',
+                  icon: Icons.trending_down_rounded,
+                  color: Colors.orange.shade800,
+                ),
+                _buildReportCard(
+                  title: isSw ? 'Faida Halisi (Profit)' : 'Net Profit',
+                  value: 'TSh ${NumberFormat('#,###').format(netProfit)}',
+                  icon: Icons.account_balance_wallet_rounded,
+                  color: netProfit >= 0 ? Colors.blue.shade800 : Colors.red,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Download PDF Banner
+            Card(
+              color: AppTheme.lightGreen,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.picture_as_pdf_rounded, color: AppTheme.primaryGreen, size: 40),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSw ? 'Tengeneza Ripoti Rasmi ya PDF' : 'Generate Official PDF Report',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isSw ? 'Pakua ripoti kamili ya uzalishaji, chakula na fedha kwa ajili ya benki au wataalamu.' : 'Download complete report for bank loans or vet reference.',
+                            style: const TextStyle(fontSize: 13, color: Colors.black87),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Tengeneza Ripoti za Shamba Lako',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
-          ),
-          const Text(
-            'Chagua aina ya ripoti na kipindi kisha ipakue kama faili la PDF au uliprinti.',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
-          ),
-          const SizedBox(height: 20),
-
-          // Select Report Type
-          const Text('Aina ya Ripoti (Module)', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedReportType,
-            items: [
-              'Uzalishaji wa Mayai',
-              'Vifo na Afya ya Kuku',
-              'Matumizi ya Chakula',
-              'Ratiba na Chanjo',
-              'Fedha na Faida',
-              'Uzalishaji kwa Ujumla (Comprehensive)',
-            ].map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedReportType = val);
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Select Period
-          const Text('Kipindi cha Muda (Time Period)', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedPeriod,
-            items: [
-              'Wiki Hii (Siku 7)',
-              'Mwezi Huu (Siku 30)',
-              'Miezi 3 Zilizopita',
-              'Mwaka Huu (2026)',
-            ].map((period) => DropdownMenuItem(value: period, child: Text(period))).toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedPeriod = val);
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // Generate Report Button
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: () => _generateAndShowPdfPreview(context),
-              icon: const Icon(Icons.picture_as_pdf_rounded),
-              label: const Text('TENGENEZA NA TAZAMA RIPOTI YA PDF', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // Quick Preset Report Cards
-          const Text('Ripoti Zilizotengenezwa Hivi Karibuni', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          _buildQuickReportTile(context, 'Ripoti ya Uzalishaji Mayai - Julai 2026', 'PDF • 1.2 MB', () => _generateAndShowPdfPreview(context)),
-          _buildQuickReportTile(context, 'Ripoti ya Fedha & Matumizi Q2 2026', 'PDF • 850 KB', () => _generateAndShowPdfPreview(context)),
-          _buildQuickReportTile(context, 'Ripoti ya Chanjo na Afya ya Kuku', 'PDF • 600 KB', () => _generateAndShowPdfPreview(context)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickReportTile(BuildContext context, String title, String desc, VoidCallback onTap) {
+  Widget _buildReportCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        leading: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-        subtitle: Text(desc, style: const TextStyle(fontSize: 11)),
-        trailing: IconButton(
-          icon: const Icon(Icons.visibility_rounded, color: AppTheme.primaryGreen),
-          onPressed: onTap,
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: color.withValues(alpha: 0.15),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: color),
+            ),
+          ],
         ),
       ),
     );

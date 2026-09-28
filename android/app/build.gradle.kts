@@ -28,6 +28,16 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        ndk {
+            // Hisense H72 is arm64; a fat APK was ~138MB and hung on USB install.
+            abiFilters += listOf("arm64-v8a")
+        }
+    }
+
+    packaging {
+        jniLibs {
+            excludes += setOf("**/libVkLayer_khronos_validation.so")
+        }
     }
 
     buildTypes {
