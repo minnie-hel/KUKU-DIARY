@@ -39,30 +39,57 @@ class DrawerMenu extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: AppTheme.primaryGreen),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: AppTheme.amberGold,
-              child: Text(
-                farmerName[0].toUpperCase(),
-                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-            ),
-            accountName: Text(
-              farmerName,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            accountEmail: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+          Container(
+            width: double.infinity,
+            color: AppTheme.primaryGreen,
+            padding: EdgeInsets.fromLTRB(16, MediaQuery.paddingOf(context).top + 18, 16, 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  profile.farmName,
-                  style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.w600),
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AppTheme.amberGold,
+                  child: Text(
+                    farmerName[0].toUpperCase(),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.black87),
+                  ),
                 ),
-                Text(
-                  '${profile.totalChickens} ${profile.chickenType.isNotEmpty ? profile.chickenType : (isSw ? 'kuku' : 'birds')}',
-                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        farmerName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17, height: 1.2),
+                      ),
+                      if (profile.farmName.trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          profile.farmName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppTheme.amberGold, fontWeight: FontWeight.w700, fontSize: 13),
+                        ),
+                      ],
+                      if (profile.location.trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          profile.location,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      Text(
+                        '${profile.totalChickens} ${profile.chickenType.isNotEmpty ? profile.chickenType : (isSw ? 'kuku' : 'birds')}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_switcher.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -10,7 +11,6 @@ class OnboardingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final isSw = appState.selectedLanguage == 'sw';
     final height = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -20,12 +20,18 @@ class OnboardingScreen extends StatelessWidget {
           children: [
             Align(
               alignment: Alignment.centerRight,
-              child: TextButton(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const LanguageSwitcher(),
+                  TextButton(
                 onPressed: appState.completeOnboarding,
                 child: Text(
-                  isSw ? 'Ruka' : 'Skip',
+                  appState.tx('Ruka', 'Skip', 'Passer'),
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Color(0xFF4B5563)),
                 ),
+              ),
+                ],
               ),
             ),
             Expanded(
@@ -57,7 +63,7 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 28),
                     Text(
-                      isSw ? 'USIMAMIZI WA KUKU' : 'POULTRY MANAGEMENT',
+                      appState.tx('USIMAMIZI WA KUKU', 'POULTRY MANAGEMENT', 'GESTION AVICOLE'),
                       style: const TextStyle(
                         color: AppTheme.primaryGreen,
                         fontWeight: FontWeight.w900,
@@ -75,9 +81,9 @@ class OnboardingScreen extends StatelessWidget {
                           height: 1.3,
                         ),
                         children: [
-                          TextSpan(text: isSw ? 'Boresha Ufugaji wa ' : 'Manage Your '),
+                          TextSpan(text: appState.tx('Boresha Ufugaji wa ', 'Manage Your ', 'Améliorez votre ')),
                           TextSpan(
-                            text: isSw ? 'Kuku Wako' : 'Poultry Better',
+                            text: appState.tx('Kuku Wako', 'Poultry Better', 'élevage'),
                             style: const TextStyle(color: AppTheme.primaryGreen),
                           ),
                         ],
@@ -85,9 +91,11 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      isSw
-                          ? 'Fuatilia kuku wako, rekodi mayai, chakula, chanjo na shughuli za shamba kutoka simu yako.'
-                          : 'Track your chickens, production, feeding, vaccination and farm activities from your phone.',
+                      appState.tx(
+                        'Fuatilia kuku wako, rekodi mayai, chakula, chanjo na shughuli za shamba kutoka simu yako.',
+                        'Track your chickens, production, feeding, vaccination and farm activities from your phone.',
+                        'Suivez vos poulets, la production, l’alimentation, les vaccins et les activités de la ferme depuis votre téléphone.',
+                      ),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -118,7 +126,7 @@ class OnboardingScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        isSw ? 'ANZA KUTUMIA' : 'GET STARTED',
+                        appState.tx('ANZA KUTUMIA', 'GET STARTED', 'COMMENCER'),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                       ),
                       const SizedBox(width: 8),

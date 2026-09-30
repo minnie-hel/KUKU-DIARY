@@ -132,24 +132,28 @@ class _ProductionScreenState extends State<ProductionScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_eggsController.text.isEmpty) return;
-
                     final appState = Provider.of<AppState>(context, listen: false);
+                    final messenger = ScaffoldMessenger.of(context);
                     final newLog = ProductionLog(
                       date: DateTime.now(),
-                      eggs: int.tryParse(_eggsController.text) ?? 380,
-                      feedKg: double.tryParse(_feedController.text) ?? 54.0,
-                      waterLiters: double.tryParse(_waterController.text) ?? 96.0,
+                      eggs: int.tryParse(_eggsController.text) ?? 0,
+                      feedKg: double.tryParse(_feedController.text) ?? 0,
+                      waterLiters: double.tryParse(_waterController.text) ?? 0,
                       mortality: int.tryParse(_mortalityController.text) ?? 0,
-                      birdAvgWeightKg: 1.88,
-                      expensesTsz: 0.0,
+                      birdAvgWeightKg: 0,
+                      expensesTsz: 0,
                     );
-                    appState.addProductionLog(newLog);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Rekodi ya leo ya utagaji imehifadhiwa kikamilifu!')),
-                    );
+                    try {
+                      await appState.addProductionLog(newLog);
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Rekodi ya leo ya utagaji imehifadhiwa.')),
+                      );
+                    } catch (e) {
+                      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryGreen,

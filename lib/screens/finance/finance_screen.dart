@@ -106,23 +106,28 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     if (amountController.text.isEmpty) return;
-                    double amt = double.tryParse(amountController.text) ?? 0.0;
-
+                    final amt = double.tryParse(amountController.text) ?? 0.0;
+                    final messenger = ScaffoldMessenger.of(context);
+                    final appState = Provider.of<AppState>(context, listen: false);
                     final newRec = FinanceRecord(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      id: '',
                       type: type,
                       category: category,
                       amount: amt,
                       date: DateTime.now(),
                       description: descController.text.isEmpty ? category : descController.text,
                     );
-                    Provider.of<AppState>(context, listen: false).addFinanceRecord(newRec);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Rekodi ya $type ya TSh ${amt.toStringAsFixed(0)} imehifadhiwa!')),
-                    );
+                    try {
+                      await appState.addFinanceRecord(newRec);
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('Rekodi ya $type ya TSh ${amt.toStringAsFixed(0)} imehifadhiwa.')),
+                      );
+                    } catch (e) {
+                      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+                    }
                   },
                   icon: const Icon(Icons.save_rounded),
                   label: const Text('HIFADHI REKODI YA FEDHA'),

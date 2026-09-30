@@ -145,30 +145,30 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   width: double.infinity,
                   height: 54,
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_eventTitleController.text.isEmpty) return;
-
                       final appState = Provider.of<AppState>(context, listen: false);
+                      final messenger = ScaffoldMessenger.of(context);
                       final newVaccine = VaccinationItem(
-                        id: 'v_${DateTime.now().millisecondsSinceEpoch}',
+                        id: '',
                         diseaseName: _eventTitleController.text.trim(),
                         vaccineName: _selectedCategory,
                         targetAge: 'Ratiba ya Kalenda',
                         scheduledDate: _selectedDate,
                         instructions: _eventDetailController.text.isEmpty ? 'Ratiba maalum ya shamba.' : _eventDetailController.text.trim(),
                       );
-                      appState.addVaccinationSchedule(newVaccine);
                       Navigator.pop(context);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          backgroundColor: AppTheme.primaryGreen,
-                          content: Text(
-                            'Tukio limewekwa kwenye kalenda na Taarifa (Notification) imetumwa kikamilifu!',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                      try {
+                        await appState.addVaccinationSchedule(newVaccine);
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            backgroundColor: AppTheme.primaryGreen,
+                            content: Text('Kumbukumbu imehifadhiwa na itaonekana kwenye kalenda na arifa.'),
                           ),
-                        ),
-                      );
+                        );
+                      } catch (e) {
+                        messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryGreen,

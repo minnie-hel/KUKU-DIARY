@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KUKU DIARY Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #F8FAFC; font-family: Poppins, sans-serif; }
+    form { width: min(420px, calc(100% - 32px)); background: #fff; border-radius: 24px; padding: 28px; border: 1px solid #E5E7EB; box-shadow: 0 16px 40px rgba(27,77,62,0.12); }
+    h1 { margin: 0; color: #1B4D3E; }
+    p { color: #F59E0B; font-weight: 700; margin-top: 4px; }
+    label { display: block; margin: 14px 0 6px; font-weight: 700; }
+    input { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #E5E7EB; font: inherit; }
+    button { width: 100%; margin-top: 18px; background: #1B4D3E; color: #fff; border: 0; border-radius: 14px; padding: 12px; font-weight: 800; cursor: pointer; }
+    .err { background: #FEE2E2; color: #DC2626; border-radius: 12px; padding: 10px; }
+    .langs { display: flex; gap: 8px; margin: 12px 0 4px; }
+    .langs a { flex: 1; text-align: center; border: 1.5px solid #E5E7EB; border-radius: 12px; padding: 8px; font-weight: 700; color: #1B4D3E; }
+    .langs a.on { background: #1B4D3E; color: #fff; border-color: #1B4D3E; }
+  </style>
+</head>
+<body>
+  <form method="post">
+    {% csrf_token %}
+    <h1>KUKU DIARY</h1>
+    <p>{{ ui.sign_in }}</p>
+    <div class="langs">
+      <a class="{% if lang == 'sw' %}on{% endif %}" href="{% url 'panel_language' %}?lang=sw&next=/manage/login/">Kiswahili</a>
+      <a class="{% if lang == 'en' %}on{% endif %}" href="{% url 'panel_language' %}?lang=en&next=/manage/login/">English</a>
+      <a class="{% if lang == 'fr' %}on{% endif %}" href="{% url 'panel_language' %}?lang=fr&next=/manage/login/">Français</a>
+    </div>
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    <label>{{ ui.username }}</label>
+    <input name="username" autofocus>
+    <label>{{ ui.password }}</label>
+    <input name="password" type="password">
+    <button type="submit">{{ ui.submit }}</button>
+  </form>
+</body>
+</html>

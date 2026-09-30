@@ -1,0 +1,180 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | KUKU DIARY{% endblock %}
+
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}">KUKU DIARY</a></div>
+{% if user.is_anonymous %}
+{% else %}
+<div id="site-tag">Smart poultry management</div>
+{% endif %}
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root, html[data-theme="light"], html[data-theme="dark"] {
+    --primary: #1B4D3E;
+    --secondary: #1B4D3E;
+    --accent: #F59E0B;
+    --primary-fg: #fff;
+    --body-fg: #1F2937;
+    --body-bg: #F8FAFC;
+    --body-quiet-color: #6B7280;
+    --body-loud-color: #1F2937;
+    --header-color: #fff;
+    --header-branding-color: #F59E0B;
+    --header-bg: #1B4D3E;
+    --header-link-color: #fff;
+    --breadcrumbs-fg: #E8F5E9;
+    --breadcrumbs-link-fg: #fff;
+    --breadcrumbs-bg: #14382e;
+    --link-fg: #1B4D3E;
+    --link-hover-color: #2E7D32;
+    --link-selected-fg: #1B4D3E;
+    --hairline-color: #E5E7EB;
+    --border-color: #E5E7EB;
+    --error-fg: #DC2626;
+    --message-success-bg: #E8F5E9;
+    --message-warning-bg: #FEF3C7;
+    --message-error-bg: #FEE2E2;
+    --darkened-bg: #F8FAFC;
+    --selected-bg: #E8F5E9;
+    --selected-row: #FEF3C7;
+    --button-fg: #fff;
+    --button-bg: #1B4D3E;
+    --button-hover-bg: #2E7D32;
+    --default-button-bg: #F59E0B;
+    --default-button-hover-bg: #d97706;
+    --close-button-bg: #6B7280;
+    --close-button-hover-bg: #4B5563;
+    --delete-button-bg: #DC2626;
+    --delete-button-hover-bg: #b91c1c;
+    --object-tools-fg: #1B4D3E;
+    --object-tools-bg: #FEF3C7;
+    --object-tools-hover-bg: #F59E0B;
+    color-scheme: light;
+  }
+
+  html, body, input, textarea, select, button, .module caption, #header a {
+    font-family: Poppins, sans-serif;
+  }
+
+  body {
+    background: #F8FAFC;
+  }
+
+  #header {
+    background: #1B4D3E;
+    padding: 14px 24px;
+  }
+
+  #site-name a {
+    color: #fff !important;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+  }
+
+  #site-tag {
+    color: #F59E0B;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  div.breadcrumbs {
+    background: #14382e;
+  }
+
+  .module, #content-related, .inline-group, fieldset.module {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(27, 77, 62, 0.06);
+  }
+
+  .module h2, .module caption, .inline-group h2 {
+    background: #1B4D3E;
+    color: #fff;
+  }
+
+  #content {
+    padding: 24px;
+  }
+
+  .button, input[type=submit], input[type=button], .submit-row input, a.button {
+    border-radius: 12px;
+    font-weight: 700;
+  }
+
+  .submit-row {
+    background: #fff;
+    border-top: 1px solid #E5E7EB;
+  }
+
+  #changelist table, #result_list {
+    border-radius: 12px;
+  }
+
+  thead th {
+    background: #E8F5E9;
+    color: #1B4D3E;
+  }
+
+  #branding, #user-tools {
+    color: #fff;
+  }
+
+  #user-tools a, #logout-form button {
+    color: #F59E0B;
+  }
+
+  .kuku-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin: 0 0 24px;
+  }
+
+  .kuku-stat {
+    display: block;
+    background: #fff;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 18px;
+    padding: 16px;
+    text-decoration: none;
+    color: #1F2937;
+  }
+
+  .kuku-stat strong {
+    display: block;
+    font-size: 28px;
+    color: #1B4D3E;
+    line-height: 1.1;
+  }
+
+  .kuku-stat span {
+    color: #6B7280;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .kuku-stat:hover {
+    border-color: #F59E0B;
+  }
+
+  .login #header {
+    justify-content: center;
+  }
+
+  .login #container {
+    border-radius: 24px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 16px 40px rgba(27, 77, 62, 0.12);
+  }
+</style>
+{% endblock %}

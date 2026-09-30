@@ -76,15 +76,20 @@ class _FeedScreenState extends State<FeedScreen> with SingleTickerProviderStateM
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   if (amountController.text.isEmpty) return;
-                  double addKg = double.tryParse(amountController.text) ?? 50.0;
-
-                  Provider.of<AppState>(context, listen: false).addFeedStock(selectedFeed, addKg);
+                  final addKg = double.tryParse(amountController.text) ?? 0;
+                  final messenger = ScaffoldMessenger.of(context);
+                  final appState = Provider.of<AppState>(context, listen: false);
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Akiba ya $selectedFeed imeongezwa kg $addKg!')),
-                  );
+                  try {
+                    await appState.addFeedStock(selectedFeed, addKg);
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('Akiba ya $selectedFeed imeongezwa kg $addKg.')),
+                    );
+                  } catch (e) {
+                    messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+                  }
                 },
                 icon: const Icon(Icons.check_circle_rounded),
                 label: const Text('ONGEZA AKIBA'),

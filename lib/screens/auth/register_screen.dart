@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/language_switcher.dart';
 import '../../widgets/tipa_logo.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -24,13 +25,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maneno ya siri hayafanani.')),
+        SnackBar(content: Text(Provider.of<AppState>(context, listen: false).tx('Maneno ya siri hayafanani.', 'Passwords do not match.', 'Les mots de passe ne correspondent pas.'))),
       );
       return;
     }
     if (_nameController.text.trim().isEmpty || _phoneController.text.trim().isEmpty || _passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Jaza jina, namba ya simu na neno la siri (angalau herufi 6).')),
+        SnackBar(content: Text(Provider.of<AppState>(context, listen: false).tx('Jaza jina, namba ya simu na neno la siri (angalau herufi 6).', 'Enter your name, phone and a password of at least 6 characters.', 'Entrez le nom, le téléphone et un mot de passe d’au moins 6 caractères.'))),
       );
       return;
     }
@@ -64,6 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 24),
           onPressed: () => appState.setRoute('login'),
         ),
+        actions: const [LanguageSwitcher()],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -73,8 +75,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             children: [
               const TipaLogo(size: 88, showTitle: true),
               const SizedBox(height: 14),
-              const Text(
-                'Jiunge na Kuku Diary',
+              Text(
+                appState.tx('Jiunge na Kuku Diary', 'Join Kuku Diary', 'Rejoindre Kuku Diary'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 28,
@@ -83,8 +85,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Anza kusimamia kuku na mayai yako kwa urahisi leo.',
+              Text(
+                appState.tx(
+                  'Anza kusimamia kuku na mayai yako kwa urahisi leo.',
+                  'Start managing your chickens and eggs today.',
+                  'Commencez à gérer vos poulets et vos œufs aujourd’hui.',
+                ),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -99,16 +105,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Jina Kamili
-                  _buildFieldLabel('Jina Lako Kamili'),
+                  _buildFieldLabel(appState.tx('Jina Lako Kamili', 'Your full name', 'Votre nom complet')),
                   TextField(
                     controller: _nameController,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    decoration: _buildInputDecoration('Mf. Juma Hamisi', Icons.person_outline_rounded),
+                    decoration: _buildInputDecoration(appState.tx('Mf. Juma Hamisi', 'e.g. Juma Hamisi', 'ex. Juma Hamisi'), Icons.person_outline_rounded),
                   ),
                   const SizedBox(height: 16),
 
                   // Namba ya Simu
-                  _buildFieldLabel('Namba ya Simu'),
+                  _buildFieldLabel(appState.tx('Namba ya Simu', 'Phone number', 'Numéro de téléphone')),
                   TextField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
@@ -118,7 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   // Barua Pepe (Email)
-                  _buildFieldLabel('Barua Pepe (Kama Unayo)'),
+                  _buildFieldLabel(appState.tx('Barua Pepe (Kama Unayo)', 'Email (if you have one)', 'E-mail (si vous en avez)')),
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -128,13 +134,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   // Neno la Siri
-                  _buildFieldLabel('Neno la Siri (Password)'),
+                  _buildFieldLabel(appState.tx('Neno la Siri (Password)', 'Password', 'Mot de passe')),
                   TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: _buildInputDecoration(
-                      'Weka neno la siri thabiti',
+                      appState.tx('Weka neno la siri thabiti', 'Choose a strong password', 'Choisissez un mot de passe solide'),
                       Icons.lock_outline_rounded,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -152,13 +158,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   // Rudia Neno la Siri
-                  _buildFieldLabel('Rudia Neno la Siri'),
+                  _buildFieldLabel(appState.tx('Rudia Neno la Siri', 'Repeat password', 'Répétez le mot de passe')),
                   TextField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: _buildInputDecoration(
-                      'Rudia neno la siri',
+                      appState.tx('Rudia neno la siri', 'Repeat the password', 'Répétez le mot de passe'),
                       Icons.shield_outlined,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -178,12 +184,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // Terms Disclaimer
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Icon(Icons.check_circle_outline_rounded, size: 20, color: AppTheme.primaryGreen),
-                      SizedBox(width: 8),
+                    children: [
+                      const Icon(Icons.check_circle_outline_rounded, size: 20, color: AppTheme.primaryGreen),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Kwa kubonyeza Jiandikishe, unakubali masharti ya usalama na uhifadhi wa taarifa za kuku wako.',
+                          appState.tx(
+                            'Kwa kubonyeza Jiandikishe, unakubali masharti ya usalama na uhifadhi wa taarifa za kuku wako.',
+                            'By creating an account you agree to keep your flock records safe.',
+                            'En créant un compte, vous acceptez de protéger les données de votre élevage.',
+                          ),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -217,7 +227,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _isSubmitting ? 'INASUBIRI...' : 'TENGENEZA AKAUNTI',
+                        _isSubmitting
+                            ? appState.tx('INASUBIRI...', 'PLEASE WAIT...', 'PATIENTEZ...')
+                            : appState.tx('TENGENEZA AKAUNTI', 'CREATE ACCOUNT', 'CRÉER UN COMPTE'),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -227,6 +239,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       const SizedBox(width: 8),
                       const Icon(Icons.arrow_forward_rounded, size: 24),
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () => appState.setRoute('login'),
+                child: Text(
+                  appState.tx('Tayari una akaunti? Ingia', 'Already have an account? Sign in', 'Vous avez déjà un compte ? Connexion'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: AppTheme.primaryGreen,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),

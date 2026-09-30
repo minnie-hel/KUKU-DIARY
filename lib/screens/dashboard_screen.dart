@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
-import '../widgets/tipa_logo.dart';
-
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -29,7 +27,8 @@ class DashboardScreen extends StatelessWidget {
         children: [
           // 1. Farmer Greeting & Farm Banner
           Container(
-            padding: const EdgeInsets.all(20),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [AppTheme.primaryGreen, Color(0xFF0F382C)],
@@ -45,46 +44,17 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 62,
-                  height: 62,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.amberGold, width: 2.5),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.all(3),
-                    child: TipaLogo(size: 52, showTitle: false),
-                  ),
+                Text(
+                  '${appState.greetingForNow()}, $firstName',
+                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white, height: 1.2),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${appState.greetingForNow()}, $firstName',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        [profile.farmName, profile.location].where((s) => s.trim().isNotEmpty).join(' • '),
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white70),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${profile.totalChickens} ${isSw ? 'kuku' : 'birds'}'
-                        '${profile.chickenType.isNotEmpty ? ' • ${profile.chickenType}' : ''}'
-                        '${appState.poultryBatches.isNotEmpty ? ' • ${appState.poultryBatches.first.age}' : ''}',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.amberGold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Karibu kwenye KUKU DIARY',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.amberGold),
                 ),
               ],
             ),
@@ -219,81 +189,36 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 24),
           ],
 
-          // 4. Main farming actions
-          _sectionHeader(Icons.touch_app_rounded, isSw ? 'VITENDO KUU VYA UFUGAJI' : 'QUICK ACTIONS'),
-          const SizedBox(height: 14),
-          Column(
-            children: [
-              _buildActionCard(
-                title: isSw ? 'REKODI MAYAI YA LEO' : 'RECORD TODAY\'S EGGS',
-                subtitle: isSw
-                    ? 'Weka hesabu ya mayai, vifo na chakula kilichotumika leo'
-                    : 'Enter eggs collected, mortality and feed used today',
-                icon: Icons.add_circle_rounded,
-                bgColor: AppTheme.primaryGreen,
-                textColor: Colors.white,
-                onTap: () => appState.setActiveDrawerModule('production'),
-              ),
-              const SizedBox(height: 12),
-              _buildActionCard(
-                title: isSw ? 'PIGA PICHA KUKU MGONJWA' : 'REPORT SICK CHICKEN',
-                subtitle: isSw
-                    ? 'Piga picha au pakia picha ya ugonjwa upate majibu ya AI'
-                    : 'Take or upload a photo for AI screening and vet advice',
-                icon: Icons.camera_alt_rounded,
-                bgColor: const Color(0xFFDC2626),
-                textColor: Colors.white,
-                onTap: () => appState.setActiveDrawerModule('disease_detection'),
-              ),
-              const SizedBox(height: 12),
-              _buildActionCard(
-                title: isSw ? 'ONGEZA CHAKULA' : 'ADD FEED',
-                subtitle: isSw
-                    ? 'Rekodi chakula kilichonunuliwa na ufuatilie kilichobaki'
-                    : 'Record feed purchased and track remaining stock',
-                icon: Icons.grass_rounded,
-                bgColor: const Color(0xFF0284C7),
-                textColor: Colors.white,
-                onTap: () => appState.setActiveDrawerModule('feed'),
-              ),
-              const SizedBox(height: 12),
-              _buildActionCard(
-                title: isSw ? 'PANGA CHANJO & KALENDA' : 'VACCINATION & CALENDAR',
-                subtitle: isSw
-                    ? 'Weka kumbukumbu za chanjo na upokee vikumbusho'
-                    : 'Schedule vaccinations and receive reminders',
-                icon: Icons.event_available_rounded,
-                bgColor: const Color(0xFF7C3AED),
-                textColor: Colors.white,
-                onTap: () => appState.setActiveDrawerModule('vaccination'),
-              ),
-              const SizedBox(height: 12),
-              _buildActionCard(
-                title: isSw ? 'SOKO LA KUKU & MAYAI' : 'MARKETPLACE',
-                subtitle: isSw
-                    ? 'Uza kuku wako na mayai kwa wateja au nunua pembejeo'
-                    : 'Sell your chickens and eggs, or buy supplies',
-                icon: Icons.storefront_rounded,
-                bgColor: AppTheme.amberGold,
-                textColor: Colors.black87,
-                onTap: () => appState.setActiveDrawerModule('marketplace'),
-              ),
-              const SizedBox(height: 12),
-              _buildActionCard(
-                title: isSw ? 'ULIZA KUKU AI' : 'ASK KUKU AI',
-                subtitle: isSw
-                    ? 'Uliza swali lolote kuhusu afya, lishe au utagaji wa kuku'
-                    : 'Ask any question about poultry health, feeding or production',
-                icon: Icons.psychology_rounded,
-                bgColor: AppTheme.infoBlue,
-                textColor: Colors.white,
-                onTap: () => appState.setActiveDrawerModule('ai_assistant'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+          _sectionHeader(Icons.list_alt_rounded, isSw ? 'REKODI ZILIZOHIFADHIWA' : 'SAVED RECORDS'),
+          const SizedBox(height: 10),
+          if (appState.productionLogs.isEmpty && appState.financeRecords.isEmpty && appState.vaccinations.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: Text('Hakuna rekodi bado. Rekodi utakayohifadhi itaonekana hapa.'),
+            )
+          else ...[
+            ...appState.productionLogs.take(4).map((log) => _savedRow(
+                  Icons.egg_rounded,
+                  isSw ? 'Mayai ${log.eggs}' : '${log.eggs} eggs',
+                  DateFormat('dd/MM/yyyy').format(log.date),
+                  () => appState.setActiveDrawerModule('production'),
+                )),
+            ...appState.financeRecords.take(4).map((row) => _savedRow(
+                  Icons.account_balance_wallet_rounded,
+                  '${row.type} • TSh ${row.amount.toStringAsFixed(0)}',
+                  row.category,
+                  () => appState.setActiveDrawerModule('finance'),
+                )),
+            ...appState.vaccinations.take(3).map((item) => _savedRow(
+                  Icons.vaccines_rounded,
+                  item.diseaseName,
+                  DateFormat('dd/MM/yyyy').format(item.scheduledDate),
+                  () => appState.setActiveDrawerModule('vaccination'),
+                )),
+            const SizedBox(height: 16),
+          ],
 
-          // 5. Modules
+          // 4. Modules
           _sectionHeader(Icons.grid_view_rounded, isSw ? 'HUDUMA ZOTE' : 'ALL MODULES'),
           const SizedBox(height: 12),
           GridView.count(
@@ -419,48 +344,15 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color bgColor,
-    required Color textColor,
-    required VoidCallback onTap,
-  }) {
+  Widget _savedRow(IconData icon, String title, String subtitle, VoidCallback onTap) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: InkWell(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Icon(icon, color: AppTheme.primaryGreen),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right_rounded),
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(20)),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.25), shape: BoxShape.circle),
-                child: Icon(icon, color: textColor, size: 32),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textColor)),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: textColor.withValues(alpha: 0.85)),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: textColor, size: 28),
-            ],
-          ),
-        ),
       ),
     );
   }

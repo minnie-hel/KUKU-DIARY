@@ -1,0 +1,15 @@
+{% extends "manage/base.html" %}
+{% block title %}{{ ui.dashboard }} | KUKU DIARY{% endblock %}
+{% block heading %}{{ ui.dashboard }}{% endblock %}
+{% block actions %}<button class="btn gold" type="button" onclick="window.print()">{{ ui.print }}</button>{% endblock %}
+{% block content %}
+<p style="margin-top:0;color:#6B7280;">{{ birds }} {{ ui.birds }}</p>
+<div class="cards">
+  {% for card in cards %}
+  <a class="card" href="{% url 'panel_list' card.key %}">
+    <strong>{{ card.count }}</strong>
+    <span>{{ card.label }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -295,11 +295,14 @@ class _VaccinationScreenState extends State<VaccinationScreen> with SingleTicker
             child: Text(isSw ? 'Ghairi' : 'Cancel', style: const TextStyle(fontSize: 16)),
           ),
           ElevatedButton(
-            onPressed: () {
-              if (diseaseCtrl.text.isNotEmpty && vaccineCtrl.text.isNotEmpty) {
-                appState.addVaccinationSchedule(
+            onPressed: () async {
+              if (diseaseCtrl.text.isEmpty || vaccineCtrl.text.isEmpty) return;
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.pop(ctx);
+              try {
+                await appState.addVaccinationSchedule(
                   VaccinationItem(
-                    id: 'v_${DateTime.now().millisecondsSinceEpoch}',
+                    id: '',
                     diseaseName: diseaseCtrl.text,
                     vaccineName: vaccineCtrl.text,
                     targetAge: ageCtrl.text.isNotEmpty ? ageCtrl.text : 'Siku 21',
@@ -308,7 +311,9 @@ class _VaccinationScreenState extends State<VaccinationScreen> with SingleTicker
                     itemType: selectedType,
                   ),
                 );
-                Navigator.pop(ctx);
+                messenger.showSnackBar(SnackBar(content: Text(isSw ? 'Kumbukumbu imehifadhiwa.' : 'Reminder saved.')));
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text(e.toString())));
               }
             },
             child: Text(isSw ? 'Hifadhi Remainder' : 'Save Reminder', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),

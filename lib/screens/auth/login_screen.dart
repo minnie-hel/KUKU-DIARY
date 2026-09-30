@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/language_switcher.dart';
 import '../../widgets/tipa_logo.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -42,12 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 16),
+              const Align(alignment: Alignment.centerRight, child: LanguageSwitcher()),
+              const SizedBox(height: 8),
 
               const TipaLogo(size: 96, showTitle: true),
               const SizedBox(height: 20),
-              const Text(
-                'Karibu Tena Shambani!',
+              Text(
+                appState.tx('Karibu Tena Shambani!', 'Welcome back to the farm!', 'Bon retour à la ferme !'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 28,
@@ -56,8 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Ingia kwenye akaunti yako ya Kuku Diary',
+              Text(
+                appState.tx(
+                  'Ingia kwenye akaunti yako ya Kuku Diary',
+                  'Sign in to your Kuku Diary account',
+                  'Connectez-vous à votre compte Kuku Diary',
+                ),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -65,15 +71,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: Color(0xFF4B5563),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
+              if (appState.authNotice != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    appState.authNotice!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.primaryGreen),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Form Inputs (Large Fonts & High Contrast)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Barua Pepe au Namba ya Simu
-                  const Text(
-                    'Barua Pepe au Namba ya Simu',
+                  Text(
+                    appState.tx('Jina, simu, au barua pepe', 'Name, phone, or email', 'Nom, téléphone ou e-mail'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -85,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
-                      hintText: 'Mf. 0712345678 au barua pepe',
+                      hintText: appState.tx('Jina uliloweka au namba ya simu', 'The name you set, or your phone', 'Le nom choisi, ou votre téléphone'),
                       prefixIcon: const Icon(Icons.person_outline_rounded, color: AppTheme.primaryGreen, size: 24),
                       filled: true,
                       fillColor: const Color(0xFFF9FAFB),
@@ -107,8 +129,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
 
                   // Neno la Siri (Password)
-                  const Text(
-                    'Neno la Siri (Password)',
+                  Text(
+                    appState.tx('Neno la Siri (Password)', 'Password', 'Mot de passe'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -161,8 +183,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         appState.setRoute('forgot_password');
                       },
-                      child: const Text(
-                        'Umesahau Neno la Siri?',
+                      child: Text(
+                        appState.tx('Umesahau Neno la Siri?', 'Forgot password?', 'Mot de passe oublié ?'),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w900,
@@ -194,7 +216,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _isSubmitting ? 'INASUBIRI...' : 'INGIA SHAMBANI',
+                        _isSubmitting
+                            ? appState.tx('INASUBIRI...', 'PLEASE WAIT...', 'PATIENTEZ...')
+                            : appState.tx('INGIA SHAMBANI', 'ENTER THE FARM', 'ENTRER'),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
@@ -212,8 +236,8 @@ class _LoginScreenState extends State<LoginScreen> {
               // Register Account Link in Swahili
               Column(
                 children: [
-                  const Text(
-                    'Huna akaunti bado?',
+                  Text(
+                    appState.tx('Huna akaunti bado?', 'No account yet?', 'Pas encore de compte ?'),
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -225,8 +249,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () {
                       appState.setRoute('register');
                     },
-                    child: const Text(
-                      'Tengeneza Akaunti Mpya Hapa',
+                    child: Text(
+                      appState.tx('Tengeneza Akaunti Mpya Hapa', 'Create a new account here', 'Créer un compte ici'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w900,

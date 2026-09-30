@@ -216,11 +216,19 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
         identifier = _normalize_identifier(serializer.validated_data['identifier'])
         password = serializer.validated_data['password']
-        user = User.objects.filter(Q(phone=identifier) | Q(email__iexact=identifier) | Q(username=identifier)).first()
+        matches = User.objects.filter(
+            Q(phone=identifier) | Q(email__iexact=identifier) | Q(username__iexact=identifier) | Q(first_name__iexact=identifier)
+        )
+        if matches.count() > 1:
+            return Response(
+                {'detail': 'More than one account uses this name. Sign in with your phone or email.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user = matches.first()
         if user:
             user = authenticate(request, username=user.username, password=password)
         if not user:
-            return Response({'detail': 'Invalid phone/email or password.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Name, phone, or password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(_issue_auth_payload(user))
 
 
@@ -349,6 +357,9 @@ class FarmProfileView(APIView):
     def patch(self, request):
         return self.put(request)
 
+    def post(self, request):
+        return self.put(request)
+
 
 class UserSettingsView(APIView):
     def get(self, request):
@@ -363,6 +374,9 @@ class UserSettingsView(APIView):
         return Response(serializer.data)
 
     def patch(self, request):
+        return self.put(request)
+
+    def post(self, request):
         return self.put(request)
 
 
@@ -442,6 +456,14 @@ class VaccinationViewSet(OwnedViewSet):
             f'{item.disease_name} ({item.vaccine_name}) imewekwa kwenye kalenda kwa ajili ya {item.target_age}.',
             'Chanjo',
         )
+
+    @action(detail=True, methods=['post'])
+    def update_item(self, request, pk=None):
+        item = self.get_object()
+        serializer = self.get_serializer(item, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class MarketplaceViewSet(viewsets.ModelViewSet):

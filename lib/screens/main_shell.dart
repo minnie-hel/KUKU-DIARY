@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_switcher.dart';
 import '../widgets/tipa_logo.dart';
 
 import 'drawer_menu.dart';
@@ -34,25 +35,28 @@ class MainNavigationShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final activeModule = appState.activeDrawerModule;
-    final isSw = appState.selectedLanguage == 'sw';
+    String tx(String sw, String en, String fr) => appState.tx(sw, en, fr);
 
     return Scaffold(
       drawer: const DrawerMenu(),
       appBar: AppBar(
+        titleSpacing: 0,
         title: Row(
           children: [
-            const TipaLogo(size: 34, showTitle: false),
-            const SizedBox(width: 10),
+            const TipaLogo(size: 32, showTitle: false),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _getModuleTitle(activeModule, isSw),
+                _getModuleTitle(activeModule, appState),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
               ),
             ),
           ],
         ),
         actions: [
+          const LanguageSwitcher(light: true, compact: true),
           IconButton(
             icon: Stack(
               children: [
@@ -103,27 +107,27 @@ class MainNavigationShell extends StatelessWidget {
             BottomNavigationBarItem(
               icon: const Icon(Icons.home_rounded),
               activeIcon: const Icon(Icons.home_rounded, size: 26),
-              label: isSw ? 'Nyumbani' : 'Home',
+              label: tx('Nyumbani', 'Home', 'Accueil'),
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.camera_alt_rounded),
               activeIcon: const Icon(Icons.camera_alt_rounded, size: 26),
-              label: isSw ? 'Afya ya Kuku' : 'Health',
+              label: tx('Afya ya Kuku', 'Health', 'Santé'),
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.storefront_rounded),
               activeIcon: const Icon(Icons.storefront_rounded, size: 26),
-              label: isSw ? 'Soko' : 'Market',
+              label: tx('Soko', 'Market', 'Marché'),
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.vaccines_rounded),
               activeIcon: const Icon(Icons.vaccines_rounded, size: 26),
-              label: isSw ? 'Chanjo' : 'Vaccines',
+              label: tx('Chanjo', 'Vaccines', 'Vaccins'),
             ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.insert_chart_rounded),
               activeIcon: const Icon(Icons.insert_chart_rounded, size: 26),
-              label: isSw ? 'Uzalishaji' : 'Production',
+              label: tx('Uzalishaji', 'Production', 'Production'),
             ),
           ],
         ),
@@ -150,52 +154,53 @@ class MainNavigationShell extends StatelessWidget {
     }
   }
 
-  String _getModuleTitle(String module, bool isSw) {
+  String _getModuleTitle(String module, AppState appState) {
+    String tx(String sw, String en, String fr) => appState.tx(sw, en, fr);
     switch (module) {
       case 'dashboard':
-        return isSw ? 'KUKU DIARY - Nyumbani' : 'KUKU DIARY - Home';
+        return tx('KUKU DIARY - Nyumbani', 'KUKU DIARY - Home', 'KUKU DIARY - Accueil');
       case 'records':
       case 'farm_management':
-        return isSw ? 'Rekodi za Shamba' : 'Farm Records';
+        return tx('Rekodi za Shamba', 'Farm Records', 'Registres de ferme');
       case 'disease_detection':
-        return isSw ? 'Scanner ya Afya ya Kuku' : 'AI Disease Screening';
+        return tx('Scanner ya Afya ya Kuku', 'AI Disease Screening', 'Dépistage des maladies');
       case 'veterinary':
-        return isSw ? 'Afya & Huduma za Daktari' : 'Health & Veterinary';
+        return tx('Afya & Huduma za Daktari', 'Health & Veterinary', 'Santé et vétérinaire');
       case 'vaccination':
-        return isSw ? 'Chanjo & Vikumbusho' : 'Vaccination & Reminders';
+        return tx('Chanjo & Vikumbusho', 'Vaccination & Reminders', 'Vaccins et rappels');
       case 'training':
-        return isSw ? 'Mafunzo ya Ufugaji' : 'Poultry Training';
+        return tx('Mafunzo ya Ufugaji', 'Poultry Training', 'Formation avicole');
       case 'marketplace':
-        return isSw ? 'Soko la Kuku & Mayai' : 'Marketplace';
+        return tx('Soko la Kuku & Mayai', 'Marketplace', 'Marché');
       case 'service_providers':
-        return isSw ? 'Watoa Huduma' : 'Service Providers';
+        return tx('Watoa Huduma', 'Service Providers', 'Prestataires');
       case 'breeds_chicks':
-        return isSw ? 'Aina Bora & Vifaranga' : 'Breeds & Chicks';
+        return tx('Aina Bora & Vifaranga', 'Breeds & Chicks', 'Races et poussins');
       case 'notifications':
-        return isSw ? 'Arifa' : 'Notifications';
+        return tx('Arifa', 'Notifications', 'Notifications');
       case 'community':
-        return isSw ? 'Jumuiya ya Wafugaji' : 'Farmer Community';
+        return tx('Jumuiya ya Wafugaji', 'Farmer Community', 'Communauté');
       case 'reports':
-        return isSw ? 'Ripoti za Kuku' : 'Farm Reports';
+        return tx('Ripoti za Kuku', 'Farm Reports', 'Rapports');
       case 'finance':
-        return isSw ? 'Fedha & Mauzo' : 'Finance & Sales';
+        return tx('Fedha & Mauzo', 'Finance & Sales', 'Finances et ventes');
       case 'gps_registration':
-        return isSw ? 'GPS na QR' : 'GPS & QR';
+        return tx('GPS na QR', 'GPS & QR', 'GPS et QR');
       case 'settings':
-        return isSw ? 'Mipangilio' : 'Settings';
+        return tx('Mipangilio', 'Settings', 'Paramètres');
       case 'profile':
-        return isSw ? 'Profaili ya Mfugaji' : 'Farmer Profile';
+        return tx('Profaili ya Mfugaji', 'Farmer Profile', 'Profil éleveur');
       case 'calendar':
       case 'calendar_module':
-        return isSw ? 'Kalenda ya Kuku' : 'Farm Calendar';
+        return tx('Kalenda ya Kuku', 'Farm Calendar', 'Calendrier');
       case 'ai_assistant':
         return 'KukuAI Assistant';
       case 'production':
       case 'production_module':
-        return isSw ? 'Uzalishaji & Grafu za Mayai' : 'Production & Charts';
+        return tx('Uzalishaji & Grafu za Mayai', 'Production & Charts', 'Production et graphiques');
       case 'feed':
       case 'feed_module':
-        return isSw ? 'Chakula cha Kuku' : 'Feed Management';
+        return tx('Chakula cha Kuku', 'Feed Management', 'Alimentation');
       default:
         return 'KUKU DIARY';
     }

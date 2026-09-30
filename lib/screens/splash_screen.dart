@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/app_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/language_switcher.dart';
 import '../widgets/tipa_logo.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -49,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final isSw = Provider.of<AppState>(context).selectedLanguage == 'sw';
+    final appState = Provider.of<AppState>(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -67,7 +68,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const SizedBox(height: 10),
+                    const Align(alignment: Alignment.centerRight, child: LanguageSwitcher()),
 
                     // Top Logo Card
                     FadeTransition(
@@ -91,7 +92,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           child: TipaLogo(
                             size: 96,
                             showTitle: true,
-                            tagline: isSw ? 'USIMAMIZI BORA WA KUKU NA MAYAI' : 'SMART POULTRY MANAGEMENT',
+                            tagline: appState.tx('USIMAMIZI BORA WA KUKU NA MAYAI', 'SMART POULTRY MANAGEMENT', 'GESTION AVICOLE'),
                           ),
                         ),
                       ),
@@ -149,7 +150,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          isSw ? 'INGIA SHAMBANI' : 'ENTER THE FARM',
+                                          appState.tx('INGIA SHAMBANI', 'ENTER THE FARM', 'ENTRER'),
                                           style: const TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.w900,

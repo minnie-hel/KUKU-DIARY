@@ -33,10 +33,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     final appState = Provider.of<AppState>(context);
     final isSw = appState.selectedLanguage == 'sw';
 
+    final myName = appState.farmProfile.farmerName.trim().toLowerCase();
     final filteredItems = appState.marketplaceItems.where((item) {
+      if (!item.isForSale) return false;
       final matchesCategory = _selectedCategory == 'All' || item.category == _selectedCategory;
-      final matchesSaleType = _showSellOnly ? item.isForSale : !item.isForSale;
-      return matchesCategory && matchesSaleType;
+      final seller = item.sellerName.trim().toLowerCase();
+      final isMine = myName.isNotEmpty && seller == myName;
+      final matchesTab = _showSellOnly ? isMine : !isMine;
+      return matchesCategory && matchesTab;
     }).toList();
 
     final content = Column(
@@ -129,7 +133,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             child: filteredItems.isEmpty
                 ? Center(
                     child: Text(
-                      isSw ? 'Hakuna bidhaa katika jamii hii sokoni' : 'No items found in this marketplace category',
+                      _showSellOnly
+                          ? (isSw ? 'Hujauza bidhaa bado. Tumia kitufe cha chini kuweka bidhaa.' : 'You have not posted a product yet.')
+                          : (isSw ? 'Hakuna bidhaa za wafugaji wengine za kununua bado.' : 'No products from other farmers yet.'),
                       style: const TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   )
@@ -155,6 +161,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       return Stack(
         children: [
           content,
+          if (_showSellOnly)
           Positioned(
             right: 16,
             bottom: 16,
@@ -176,7 +183,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       appBar: AppBar(
         title: Text(isSw ? 'Soko la Kuku & Vifaa' : 'Poultry Marketplace'),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: _showSellOnly ? FloatingActionButton.extended(
         onPressed: () => _showAddProductDialog(context, appState, isSw),
         backgroundColor: AppTheme.amberGold,
         icon: const Icon(Icons.add_shopping_cart_rounded, color: Colors.black87, size: 26),
@@ -184,7 +191,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           isSw ? 'Weka Bidhaa Sokoni' : 'Post Product',
           style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
         ),
-      ),
+      ) : null,
       body: content,
     );
   }
@@ -247,27 +254,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             child: Stack(
               children: [
                 Container(
-                  height: 105,
+                  height: 120,
                   width: double.infinity,
-                  color: catColor.withValues(alpha: 0.15),
-                  child: Center(
-                    child: Icon(catIcon, size: 48, color: catColor),
+                  color: catColor.withValues(alpha: 0.16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(catIcon, size: 52, color: catColor),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.category,
+                        style: TextStyle(color: catColor, fontWeight: FontWeight.w800, fontSize: 13),
+                      ),
+                    ],
                   ),
-                ),
-                Image.network(
-                  item.imageUrl,
-                  height: 105,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                    if (wasSynchronouslyLoaded || frame != null) return child;
-                    return AnimatedOpacity(
-                      opacity: frame == null ? 0.0 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: child,
-                    );
-                  },
-                  errorBuilder: (ctx, err, stack) => const SizedBox.shrink(),
                 ),
                 Positioned(
                   top: 6,
@@ -329,7 +329,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       padding: EdgeInsets.zero,
                     ),
                     child: Text(
-                      isSw ? 'Angalia Oda' : 'View & Order',
+                      _showSellOnly ? (isSw ? 'Bidhaa yangu' : 'My product') : (isSw ? 'Nunua hii' : 'Buy this'),
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -388,11 +388,29 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(isSw ? 'Oda yako ya ${item.title} imetumwa kwa muuzaji!' : 'Order for ${item.title} sent to seller!')),
-                        );
+                        if (_showSellOnly) return;
+                        final appState = Provider.of<AppState>(context, listen: false);
+                        try {
+                          await appState.addFinanceRecord(FinanceRecord(
+                            id: '',
+                            type: 'Matumizi',
+                            category: item.category,
+                            amount: item.price,
+                            date: DateTime.now(),
+                            description: 'Nunua ${item.title} kutoka ${item.sellerName}',
+                          ));
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(isSw
+                                ? 'Umenunua ${item.title} kutoka ${item.sellerName}. Imeonekana kwenye fedha.'
+                                : 'You bought ${item.title} from ${item.sellerName}.')),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                        }
                       },
                       icon: const Icon(Icons.shopping_cart_checkout_rounded, size: 22),
                       label: Text(isSw ? 'Weka Oda Papo Hapo' : 'Place Order', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -408,16 +426,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   void _showAddProductDialog(BuildContext context, AppState appState, bool isSw) {
+    final selling = _showSellOnly;
     final titleCtrl = TextEditingController();
     final priceCtrl = TextEditingController();
-    final unitCtrl = TextEditingController(text: 'TSh / Trei');
+    final unitCtrl = TextEditingController(text: selling ? 'TSh / Trei' : 'TSh / Gunzi');
     final descCtrl = TextEditingController();
-    String category = 'Mayai';
+    String category = selling ? 'Mayai' : 'Vyakula';
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isSw ? 'Weka Bidhaa Mpya Sokoni' : 'Post Product to Marketplace', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        title: Text(
+          selling
+              ? (isSw ? 'Weka bidhaa ya kuuza' : 'Post a product to sell')
+              : (isSw ? 'Weka ombi la kununua' : 'Post a supply you want to buy'),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -466,24 +490,33 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             child: Text(isSw ? 'Ghairi' : 'Cancel', style: const TextStyle(fontSize: 16)),
           ),
           ElevatedButton(
-            onPressed: () {
-              if (titleCtrl.text.isNotEmpty && priceCtrl.text.isNotEmpty) {
-                appState.addMarketplaceItem(
-                  MarketplaceItem(
-                    id: 'm_${DateTime.now().millisecondsSinceEpoch}',
-                    title: titleCtrl.text,
-                    category: category,
-                    price: double.tryParse(priceCtrl.text) ?? 10000.0,
-                    unit: unitCtrl.text,
-                    description: descCtrl.text,
-                    sellerName: appState.farmProfile.farmerName,
-                    sellerPhone: appState.farmProfile.phone,
-                    location: appState.farmProfile.location,
-                    imageUrl: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&w=400&q=80',
-                    isForSale: true,
-                  ),
+            onPressed: () async {
+              if (titleCtrl.text.trim().isEmpty || priceCtrl.text.trim().isEmpty) return;
+              final item = MarketplaceItem(
+                id: '',
+                title: titleCtrl.text.trim(),
+                category: category,
+                price: double.tryParse(priceCtrl.text.trim()) ?? 0,
+                unit: unitCtrl.text.trim(),
+                description: descCtrl.text.trim(),
+                sellerName: appState.farmProfile.farmerName,
+                sellerPhone: appState.farmProfile.phone,
+                location: appState.farmProfile.location,
+                imageUrl: '',
+                isForSale: selling,
+              );
+              Navigator.pop(ctx);
+              try {
+                await appState.addMarketplaceItem(item);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(selling
+                      ? (isSw ? 'Bidhaa imewekwa kwenye Uza.' : 'Product posted under Sell.')
+                      : (isSw ? 'Ombi limewekwa kwenye Nunua.' : 'Request posted under Buy Supplies.'))),
                 );
-                Navigator.pop(ctx);
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
               }
             },
             child: Text(isSw ? 'Hifadhi Sokoni' : 'Post Item', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),

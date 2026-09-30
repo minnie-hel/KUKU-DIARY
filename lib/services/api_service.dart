@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -46,6 +47,9 @@ class ApiService {
   }
 
   String _errorMessage(dynamic body, int status) {
+    if (body is String && body.contains('<html')) {
+      return 'Seva haikukubali ombi hili ($status). Jaribu tena baada ya muda mfupi.';
+    }
     if (body is Map) {
       if (body['detail'] != null) return body['detail'].toString();
       if (body['message'] != null) return body['message'].toString();
@@ -58,30 +62,43 @@ class ApiService {
     return 'Request failed ($status)';
   }
 
+  static const Duration _timeout = Duration(seconds: 20);
+  static const String _offlineMessage =
+      'Haiwezi kufikia seva ya KUKU DIARY. Hakikisha una intaneti/Wi-Fi na seva inafanya kazi.\n'
+      '(Cannot reach the KUKU DIARY server. Check your connection and that the server is running.)';
+
   Future<dynamic> _send(String method, String path, {Object? body, bool auth = true}) async {
     final uri = _uri(path);
     final headers = Map<String, String>.from(_headers);
     if (!auth) headers.remove('Authorization');
     http.Response response;
     final encoded = body == null ? null : jsonEncode(body);
-    switch (method) {
-      case 'GET':
-        response = await http.get(uri, headers: headers);
-        break;
-      case 'POST':
-        response = await http.post(uri, headers: headers, body: encoded);
-        break;
-      case 'PUT':
-        response = await http.put(uri, headers: headers, body: encoded);
-        break;
-      case 'PATCH':
-        response = await http.patch(uri, headers: headers, body: encoded);
-        break;
-      case 'DELETE':
-        response = await http.delete(uri, headers: headers);
-        break;
-      default:
-        throw ApiException('Unsupported method $method');
+    try {
+      switch (method) {
+        case 'GET':
+          response = await http.get(uri, headers: headers).timeout(_timeout);
+          break;
+        case 'POST':
+          response = await http.post(uri, headers: headers, body: encoded).timeout(_timeout);
+          break;
+        case 'PUT':
+          response = await http.put(uri, headers: headers, body: encoded).timeout(_timeout);
+          break;
+        case 'PATCH':
+          response = await http.patch(uri, headers: headers, body: encoded).timeout(_timeout);
+          break;
+        case 'DELETE':
+          response = await http.delete(uri, headers: headers).timeout(_timeout);
+          break;
+        default:
+          throw ApiException('Unsupported method $method');
+      }
+    } on SocketException {
+      throw ApiException(_offlineMessage);
+    } on TimeoutException {
+      throw ApiException(_offlineMessage);
+    } on http.ClientException {
+      throw ApiException(_offlineMessage);
     }
     final decoded = _decode(response);
     if (response.statusCode >= 400) {
@@ -164,11 +181,11 @@ class ApiService {
   }
 
   Future<FarmProfile> updateFarm(Map<String, dynamic> data) async {
-    return FarmProfile.fromJson(Map<String, dynamic>.from(await _send('PUT', '/farm/', body: data)));
+    return FarmProfile.fromJson(Map<String, dynamic>.from(await _send('POST', '/farm/', body: data)));
   }
 
   Future<void> updateSettings(Map<String, dynamic> data) async {
-    await _send('PUT', '/settings/', body: data);
+    await _send('POST', '/settings/', body: data);
   }
 
   Future<PoultryBatch> createBatch(PoultryBatch batch) async {
@@ -195,7 +212,7 @@ class ApiService {
   }
 
   Future<VaccinationItem> patchVaccination(String id, Map<String, dynamic> data) async {
-    return VaccinationItem.fromJson(Map<String, dynamic>.from(await _send('PATCH', '/vaccinations/$id/', body: data)));
+    return VaccinationItem.fromJson(Map<String, dynamic>.from(await _send('POST', '/vaccinations/$id/update_item/', body: data)));
   }
 
   Future<VetConsultation> bookConsultation(Map<String, dynamic> data) async {
@@ -228,7 +245,7 @@ class ApiService {
   }
 
   Future<void> clearNotifications() async {
-    await _send('DELETE', '/notifications/clear/');
+    await _send('POST', '/notifications/clear/');
   }
 
   Future<Map<String, dynamic>> sendChat(String text) async {
@@ -241,8 +258,17 @@ class ApiService {
       if (token != null) request.headers['Authorization'] = 'Token $token';
       request.fields['symptoms_text'] = symptoms;
       request.files.add(await http.MultipartFile.fromPath('image', imagePath));
-      final streamed = await request.send();
-      final response = await http.Response.fromStream(streamed);
+      http.Response response;
+      try {
+        final streamed = await request.send().timeout(const Duration(seconds: 60));
+        response = await http.Response.fromStream(streamed);
+      } on SocketException {
+        throw ApiException(_offlineMessage);
+      } on TimeoutException {
+        throw ApiException(_offlineMessage);
+      } on http.ClientException {
+        throw ApiException(_offlineMessage);
+      }
       final decoded = _decode(response);
       if (response.statusCode >= 400) {
         throw ApiException(_errorMessage(decoded, response.statusCode), response.statusCode);

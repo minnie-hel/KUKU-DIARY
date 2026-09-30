@@ -19,14 +19,21 @@ class TipaLogo extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(size * 0.5),
-          child: Image.asset(
-            'assets/images/tipa_logo.png',
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Icon(Icons.pets_rounded, size: size * 0.6),
+        ClipOval(
+          child: ColoredBox(
+            color: Colors.white,
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: Transform.scale(
+                scale: 1.55,
+                child: Image.asset(
+                  'assets/images/tipa_logo.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Icon(Icons.pets_rounded, size: size * 0.7),
+                ),
+              ),
+            ),
           ),
         ),
         if (showTitle) ...[

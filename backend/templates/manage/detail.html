@@ -1,0 +1,20 @@
+{% extends "manage/base.html" %}
+{% block title %}{{ section.label }} | KUKU DIARY{% endblock %}
+{% block heading %}{{ section.label }}{% endblock %}
+{% block actions %}
+<a class="btn ghost" href="{% url 'panel_list' section.key %}">{{ ui.back }}</a>
+<a class="btn" href="{% url 'panel_edit' section.key obj.pk %}">{{ ui.edit }}</a>
+<button class="btn gold" type="button" onclick="window.print()">{{ ui.print }}</button>
+<form method="post" action="{% url 'panel_delete' section.key obj.pk %}" onsubmit="return confirm('{{ ui.confirm_delete }}');">
+  {% csrf_token %}
+  <button class="btn red" type="submit">{{ ui.delete }}</button>
+</form>
+{% endblock %}
+{% block content %}
+<div class="panel detail">
+  {% for label, value in rows %}
+  <div>{{ label }}</div>
+  <div>{{ value }}</div>
+  {% endfor %}
+</div>
+{% endblock %}

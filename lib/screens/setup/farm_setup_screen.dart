@@ -159,7 +159,13 @@ class _FarmSetupScreenState extends State<FarmSetupScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.black87),
+          onPressed: () {
+            final appState = Provider.of<AppState>(context, listen: false);
+            appState.setActiveDrawerModule('dashboard');
+          },
+        ),
         title: const Text(
           'Usajili wa Shamba',
           style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w900, fontSize: 20),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/tipa_logo.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -10,101 +11,93 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     final profile = appState.farmProfile;
+    final isSw = appState.selectedLanguage == 'sw';
+    final name = profile.farmerName.trim().isEmpty ? (isSw ? 'Mfugaji' : 'Farmer') : profile.farmerName.trim();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          // Profile Header Avatar
-          Center(
-            child: Column(
-              children: [
-                Stack(
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Row(
+            children: [
+              const TipaLogo(size: 72, showTitle: false),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 46,
-                      backgroundColor: AppTheme.amberGold,
-                      child: Text(
-                        profile.initial,
-                        style: const TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: Colors.black87),
-                      ),
+                    Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF111827))),
+                    const SizedBox(height: 4),
+                    Text(
+                      profile.farmName.trim().isEmpty ? (isSw ? 'Shamba halijawekwa' : 'Farm not saved') : profile.farmName,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.primaryGreen),
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(color: AppTheme.primaryGreen, shape: BoxShape.circle),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
-                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      profile.location.trim().isEmpty ? (isSw ? 'Eneo halijawekwa' : 'Location not saved') : profile.location,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(profile.farmerName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                Text(profile.email, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Farm Info Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Taarifa za Shamba Lako', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryGreen)),
-                  const Divider(),
-                  _buildProfileRow('Jina la Shamba', profile.farmName),
-                  _buildProfileRow('Eneo / Mahali', profile.location),
-                  _buildProfileRow('Aina ya Kuku', profile.chickenType),
-                  _buildProfileRow('Idadi ya Kuku', '${profile.totalChickens} Kuku'),
-                  _buildProfileRow('Mfumo wa Banda', profile.housingSystem),
-                ],
               ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(isSw ? 'Taarifa za shamba' : 'Farm details', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.primaryGreen)),
+        const SizedBox(height: 8),
+        _detail(Icons.home_work_outlined, isSw ? 'Jina la shamba' : 'Farm name', profile.farmName),
+        _detail(Icons.location_on_outlined, isSw ? 'Eneo' : 'Location', profile.location),
+        _detail(Icons.pets_outlined, isSw ? 'Aina ya kuku' : 'Chicken type', profile.chickenType),
+        _detail(Icons.numbers_rounded, isSw ? 'Idadi ya kuku' : 'Birds', '${profile.totalChickens}'),
+        _detail(Icons.house_outlined, isSw ? 'Mfumo wa banda' : 'Housing', profile.housingSystem),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: () => appState.setRoute('farm_setup'),
+            icon: const Icon(Icons.edit_rounded),
+            label: Text(isSw ? 'Hariri taarifa za shamba' : 'Edit farm details', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Account Actions
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.edit_rounded, color: AppTheme.primaryGreen),
-                  title: const Text('Hariri Taarifa za Shamba'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => appState.setRoute('farm_setup'),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.lock_rounded, color: AppTheme.amberGold),
-                  title: const Text('Badilisha Neno la Siri'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fomu ya kubadili neno la siri imefunguka.')),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildProfileRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+  Widget _detail(IconData icon, String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Icon(icon, color: AppTheme.primaryGreen),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(value.trim().isEmpty ? '—' : value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              ],
+            ),
+          ),
         ],
       ),
     );

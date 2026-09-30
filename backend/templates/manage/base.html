@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}KUKU DIARY{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --green: #1B4D3E;
+      --green-2: #2E7D32;
+      --gold: #F59E0B;
+      --bg: #F8FAFC;
+      --text: #1F2937;
+      --muted: #6B7280;
+      --line: #E5E7EB;
+      --red: #DC2626;
+      --blue: #2563EB;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Poppins, sans-serif; background: var(--bg); color: var(--text); }
+    a { color: var(--green); text-decoration: none; }
+    .shell { display: flex; min-height: 100vh; }
+    .sidebar { width: 250px; background: var(--green); color: #fff; padding: 22px 14px; position: sticky; top: 0; height: 100vh; overflow: auto; }
+    .brand { font-weight: 800; font-size: 20px; letter-spacing: 0.4px; }
+    .brand span { color: var(--gold); }
+    .tag { color: #d1fae5; font-size: 12px; margin: 4px 0 18px; }
+    .group { margin: 16px 8px 6px; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: #a7f3d0; }
+    .sidebar a.item { display: block; color: #fff; padding: 9px 12px; border-radius: 12px; font-size: 14px; font-weight: 600; }
+    .sidebar a.item.active, .sidebar a.item:hover { background: rgba(255,255,255,0.12); color: var(--gold); }
+    .main { flex: 1; min-width: 0; }
+    .top { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 18px 24px; background: #fff; border-bottom: 1px solid var(--line); }
+    .top h1 { margin: 0; font-size: 22px; }
+    .who { color: var(--muted); font-size: 13px; }
+    .content { padding: 22px 24px 40px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { border: 0; border-radius: 12px; padding: 10px 14px; font-weight: 700; cursor: pointer; background: var(--green); color: #fff; }
+    .btn.gold { background: var(--gold); color: #111827; }
+    .btn.ghost { background: #fff; color: var(--green); border: 1.5px solid var(--line); }
+    .btn.red { background: var(--red); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+    .card, .panel { background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 8px 20px rgba(27,77,62,0.05); }
+    .card { display: block; padding: 16px; }
+    .card strong { display: block; font-size: 28px; color: var(--green); }
+    .card span { color: var(--muted); font-size: 13px; font-weight: 700; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    input.input, select.input, textarea.input { width: 100%; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; font: inherit; background: #fff; }
+    textarea.area { min-height: 110px; }
+    .toolbar .input { width: auto; min-width: 180px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: top; }
+    th { color: var(--green); font-size: 12px; letter-spacing: 0.3px; background: #E8F5E9; }
+    tr:hover td { background: #F8FAFC; }
+    .pager { display: flex; gap: 8px; margin-top: 14px; }
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .field .errorlist { color: var(--red); font-size: 12px; padding: 0; margin: 4px 0 0; }
+    .detail { display: grid; grid-template-columns: 220px 1fr; }
+    .detail div { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    .detail div:nth-child(odd) { color: var(--muted); font-weight: 700; }
+    .note { background: #FEF3C7; border-radius: 12px; padding: 10px 12px; color: #92400e; }
+    .lang { background: #fff; color: var(--green); border: 1.5px solid var(--line); border-radius: 12px; padding: 8px 10px; font: inherit; font-weight: 700; }
+    .row-actions { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+    .icon-btn { width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; color: var(--green); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+    .icon-btn svg { width: 16px; height: 16px; }
+    .icon-btn.edit { color: var(--blue); }
+    .icon-btn.delete { color: var(--red); }
+    .icon-btn:hover { background: #E8F5E9; }
+    form.inline { margin: 0; }
+    @media (max-width: 900px) {
+      .shell { display: block; }
+      .sidebar { width: auto; height: auto; position: relative; }
+      .fields, .detail { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .sidebar, .top, .toolbar, .actions, .pager { display: none !important; }
+      .content { padding: 0; }
+      .panel { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">KUKU <span>DIARY</span></div>
+      <div class="tag">{{ ui.admin }}</div>
+      <a class="item {% if active == 'home' %}active{% endif %}" href="{% url 'panel_home' %}">{{ ui.dashboard }}</a>
+      {% for group in groups %}
+      <div class="group">{{ group.name }}</div>
+      {% for item in group.items %}
+      <a class="item {% if active == item.key %}active{% endif %}" href="{% url 'panel_list' item.key %}">{{ item.label }}</a>
+      {% endfor %}
+      {% endfor %}
+    </aside>
+    <section class="main">
+      <header class="top">
+        <div>
+          <h1>{% block heading %}{{ ui.dashboard }}{% endblock %}</h1>
+          <div class="who">{{ request.user.get_full_name|default:request.user.username }}</div>
+        </div>
+        <div class="actions">
+          <form method="get" action="{% url 'panel_language' %}">
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <select class="lang" name="lang" onchange="this.form.submit()" aria-label="{{ ui.language }}">
+              <option value="sw" {% if lang == 'sw' %}selected{% endif %}>Kiswahili</option>
+              <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+              <option value="fr" {% if lang == 'fr' %}selected{% endif %}>Français</option>
+            </select>
+          </form>
+          {% block actions %}{% endblock %}
+          <a class="btn ghost" href="{% url 'panel_logout' %}">{{ ui.logout }}</a>
+        </div>
+      </header>
+      <div class="content">
+        {% block content %}{% endblock %}
+      </div>
+    </section>
+  </div>
+</body>
+</html>

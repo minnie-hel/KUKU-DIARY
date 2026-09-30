@@ -192,17 +192,22 @@ class _VeterinaryScreenState extends State<VeterinaryScreen> with SingleTickerPr
             child: Text(isSw ? 'Ghairi' : 'Cancel', style: const TextStyle(fontSize: 16)),
           ),
           ElevatedButton(
-            onPressed: () {
-              appState.bookVetConsultation(
-                vetId: vet.id,
-                vetName: vet.name,
-                consultationType: consultationType,
-                symptomsOrNotes: notesController.text.isNotEmpty ? notesController.text : 'Routine checkup request',
-              );
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(isSw ? 'Ombi la miadi limetumwa kwa ${vet.name}!' : 'Booking request sent to ${vet.name}!')),
-              );
+              try {
+                await appState.bookVetConsultation(
+                  vetId: vet.id,
+                  vetName: vet.name,
+                  consultationType: consultationType,
+                  symptomsOrNotes: notesController.text.isNotEmpty ? notesController.text : 'Routine checkup request',
+                );
+                messenger.showSnackBar(
+                  SnackBar(content: Text(isSw ? 'Ombi la miadi limetumwa kwa ${vet.name}.' : 'Booking request sent to ${vet.name}.')),
+                );
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+              }
             },
             child: Text(isSw ? 'Tuma Miadi' : 'Submit Request', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),

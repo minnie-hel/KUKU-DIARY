@@ -416,19 +416,25 @@ class _FarmManagementScreenState extends State<FarmManagementScreen> with Single
             child: Text(isSw ? 'Ghairi' : 'Cancel', style: const TextStyle(fontSize: 16)),
           ),
           ElevatedButton(
-            onPressed: () {
-              appState.addProductionLog(
-                ProductionLog(
-                  date: DateTime.now(),
-                  eggs: int.tryParse(eggsCtrl.text) ?? 0,
-                  feedKg: double.tryParse(feedCtrl.text) ?? 0.0,
-                  waterLiters: double.tryParse(waterCtrl.text) ?? 0.0,
-                  mortality: int.tryParse(mortalityCtrl.text) ?? 0,
-                  birdAvgWeightKg: double.tryParse(weightCtrl.text) ?? 1.8,
-                  expensesTsz: double.tryParse(expenseCtrl.text) ?? 0.0,
-                ),
-              );
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
+              try {
+                await appState.addProductionLog(
+                  ProductionLog(
+                    date: DateTime.now(),
+                    eggs: int.tryParse(eggsCtrl.text) ?? 0,
+                    feedKg: double.tryParse(feedCtrl.text) ?? 0.0,
+                    waterLiters: double.tryParse(waterCtrl.text) ?? 0.0,
+                    mortality: int.tryParse(mortalityCtrl.text) ?? 0,
+                    birdAvgWeightKg: double.tryParse(weightCtrl.text) ?? 0,
+                    expensesTsz: double.tryParse(expenseCtrl.text) ?? 0.0,
+                  ),
+                );
+                messenger.showSnackBar(SnackBar(content: Text(isSw ? 'Rekodi imehifadhiwa.' : 'Record saved.')));
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+              }
             },
             child: Text(isSw ? 'Hifadhi Taarifa' : 'Save Record', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ),
